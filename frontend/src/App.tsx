@@ -527,6 +527,14 @@ export default function App() {
         </div>
       )}
 
+      {/* MOBILE SIDEBAR BACKDROP OVERLAY */}
+      {mobileSidebarOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR NAVIGATION */}
       <Sidebar
         conversations={conversations}

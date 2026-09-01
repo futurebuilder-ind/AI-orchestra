@@ -69,7 +69,6 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
   const activeCount = agentPoolData.filter(a => a.status === 'processing').length;
   const completedCount = agentPoolData.filter(a => a.status === 'completed').length;
   const verifyingCount = criticStatus === 'running' ? 1 : 0;
-  const queuedCount = agentPoolData.filter(a => a.status === 'queued').length;
 
   const getNodeClass = (status: 'pending' | 'running' | 'completed' | 'failed') => {
     if (status === 'running' && effects.enableGlow && !effects.reduceMotion) {
@@ -96,7 +95,6 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
         <div className="orchestra-summary-badges">
           <span className="summary-pill active">● {activeCount || agentPoolData.length} ACTIVE</span>
           <span className="summary-pill completed">✓ {completedCount} COMPLETED</span>
-          {verifyingCount > 0 && <span className="summary-pill verifying">● VERIFYING</span>}
           
           <button
             className="command-btn view-agents-btn"
@@ -104,7 +102,7 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
             title="View detailed agent pool drawer"
           >
             <Eye size={12} />
-            <span>View Agents ({agentPoolData.length})</span>
+            <span>Agents ({agentPoolData.length})</span>
           </button>
 
           <button
@@ -126,83 +124,61 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
           <span className="collapsed-pill">✓ CONSENSUS SYNTHESIZED</span>
         </div>
       ) : (
-        /* EXPANDED PIPELINE GRAPH */
+        /* VERTICAL TIMELINE GRAPH FOR ALL SCREEN SIZES */
         <div className="graph-container">
-          {councilMode === 'single' ? (
-            <div className="single-mode-graph">
-              <div className={`graph-node-pill ${getNodeClass(analysisStatus)}`}>
-                <span>ORCHESTRATOR ROUTER</span>
-                <span>{analysisStatus === 'completed' ? '✓' : '●'}</span>
-              </div>
-
-              <svg width="2" height="16" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="16" stroke="var(--border-medium)" strokeWidth="1" />
-                {effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="16" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
-              </svg>
-
-              <div className={`graph-node-pill single-model-node ${getNodeClass(parallelStatus)}`}>
-                <Cpu size={13} />
-                <span>{selectedModels[0] || 'Qwen 3 4B'} (1 AGENT)</span>
-                <span>{parallelStatus === 'completed' ? '✓ COMPLETE' : '● RUNNING'}</span>
-              </div>
-
-              <svg width="2" height="16" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="16" stroke="var(--border-medium)" strokeWidth="1" />
-                {effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="16" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
-              </svg>
-
-              <div className={`graph-node-pill ${getNodeClass(synthesisStatus)}`}>
-                <span>FINAL SOLUTION</span>
-                <span>{synthesisStatus === 'completed' ? '✓' : '○'}</span>
+          <div className="vertical-pipeline-timeline">
+            {/* NODE 1: TASK ROUTER */}
+            <div className={`vertical-timeline-node ${getNodeClass(analysisStatus)}`}>
+              <div className="vertical-node-dot">1</div>
+              <div className="vertical-node-content">
+                <div className="vertical-node-title">TASK ROUTING & ANALYSIS</div>
+                <div className="vertical-node-sub">{analysisStatus === 'completed' ? '✓ Task classified & route assigned' : analysisStatus === 'running' ? '● Analyzing query complexity...' : '○ Waiting...'}</div>
               </div>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '6px' }}>
-              {/* STAGE 1: ROUTER */}
-              <div className={`graph-node-pill ${getNodeClass(analysisStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
-                <span>1. ROUTER & ANALYSIS</span>
-                <span>{analysisStatus === 'completed' ? '✓' : analysisStatus === 'running' ? '●' : '○'}</span>
-              </div>
 
-              <svg width="2" height="14" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
-              </svg>
+            <div className="vertical-timeline-line" />
 
-              {/* STAGE 2: PARALLEL AGENTS POOL OVERVIEW */}
-              <div className={`graph-node-pill ${getNodeClass(parallelStatus)}`} style={{ width: '280px', justifyContent: 'space-between' }}>
-                <span>2. PARALLEL AGENT POOL ({agentPoolData.length} AGENTS)</span>
-                <span>{parallelStatus === 'completed' ? '✓' : parallelStatus === 'running' ? '●' : '○'}</span>
-              </div>
-
-              <svg width="2" height="14" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
-              </svg>
-
-              {/* STAGE 3: CRITIC */}
-              <div className={`graph-node-pill ${getNodeClass(criticStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
-                <span>3. VERIFICATION & CRITIC</span>
-                <span>{criticStatus === 'completed' ? '✓' : criticStatus === 'running' ? '●' : '○'}</span>
-              </div>
-
-              <svg width="2" height="14" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
-              </svg>
-
-              {/* STAGE 4: SYNTHESIS */}
-              <div className={`graph-node-pill ${getNodeClass(synthesisStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
-                <span>4. SYNTHESIS CONSENSUS</span>
-                <span>{synthesisStatus === 'completed' ? '✓' : synthesisStatus === 'running' ? '●' : '○'}</span>
+            {/* NODE 2: PARALLEL AGENT COUNCIL */}
+            <div className={`vertical-timeline-node ${getNodeClass(parallelStatus)}`}>
+              <div className="vertical-node-dot">2</div>
+              <div className="vertical-node-content">
+                <div className="vertical-node-title">PARALLEL AGENT POOL ({agentPoolData.length} AGENTS)</div>
+                <div className="vertical-node-sub">
+                  {parallelStatus === 'completed' ? `✓ ${agentPoolData.length} agents completed responses` : parallelStatus === 'running' ? `● Running ${agentPoolData.length} parallel model agents...` : '○ Pending execution...'}
+                </div>
               </div>
             </div>
-          )}
+
+            <div className="vertical-timeline-line" />
+
+            {/* NODE 3: VERIFICATION & CRITIC */}
+            {councilMode !== 'single' && (
+              <>
+                <div className={`vertical-timeline-node ${getNodeClass(criticStatus)}`}>
+                  <div className="vertical-node-dot">3</div>
+                  <div className="vertical-node-content">
+                    <div className="vertical-node-title">VERIFICATION & ADVERSARIAL CRITIC</div>
+                    <div className="vertical-node-sub">
+                      {criticStatus === 'completed' ? '✓ Cross-check & logic verification passed' : criticStatus === 'running' ? '● Running adversarial critic checks...' : '○ Pending...'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="vertical-timeline-line" />
+              </>
+            )}
+
+            {/* NODE 4: SYNTHESIS & FINAL ANSWER */}
+            <div className={`vertical-timeline-node ${getNodeClass(synthesisStatus)}`}>
+              <div className="vertical-node-dot">{councilMode === 'single' ? '3' : '4'}</div>
+              <div className="vertical-node-content">
+                <div className="vertical-node-title">EXECUTIVE CONSENSUS SYNTHESIS</div>
+                <div className="vertical-node-sub">
+                  {synthesisStatus === 'completed' ? '✓ Final solution synthesized' : synthesisStatus === 'running' ? '● Merging agent answers into consensus...' : '○ Ready'}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -213,9 +189,9 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={14} style={{ color: 'var(--accent-color)' }} />
-                <span>AGENT COUNCIL POOL DETAILS ({agentPoolData.length} AGENTS)</span>
+                <span>AGENT COUNCIL POOL ({agentPoolData.length} AGENTS)</span>
               </div>
-              <button onClick={() => setShowAgentDrawer(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button onClick={() => setShowAgentDrawer(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={16} />
               </button>
             </div>
@@ -275,6 +251,7 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
             <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 className="command-btn active"
+                style={{ minHeight: '44px', padding: '0 16px' }}
                 onClick={() => setShowAgentDrawer(false)}
               >
                 Close Drawer

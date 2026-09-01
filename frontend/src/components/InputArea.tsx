@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Paperclip, X, Cpu, ArrowUp, Users, ChevronDown, Check, Sliders, Minus, Plus, Zap } from 'lucide-react';
+import { Paperclip, X, Cpu, ArrowUp, Users, ChevronDown, Check, Sliders, Minus, Plus, Zap, Layers, Sparkles } from 'lucide-react';
 import { CouncilMode } from '../types';
 
 interface InputAreaProps {
@@ -42,11 +42,12 @@ export const InputArea: React.FC<InputAreaProps> = ({
   
   const [showAgentPopover, setShowAgentPopover] = useState(false);
   const [showModelPopover, setShowModelPopover] = useState(false);
+  const [showMobileModeSheet, setShowMobileModeSheet] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
     }
   }, [query]);
 
@@ -95,8 +96,8 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
   return (
     <div className="input-container">
-      {/* COMPACT PREMIUM COUNCIL MODE SEGMENTED CONTROL */}
-      <div className="segmented-control-container">
+      {/* DESKTOP MODE SELECTOR BAR */}
+      <div className="segmented-control-container desktop-only-controls">
         <div className="segmented-control">
           <button
             className={`segmented-btn ${councilMode === 'single' ? 'active' : ''}`}
@@ -128,12 +129,12 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
         <div className="council-context-bar">
           <span className="context-desc">
-            {councilMode === 'single' && '1 agent · fastest execution'}
-            {councilMode === 'multi' && '2–4 agents · cross-check & consensus'}
+            {councilMode === 'single' && '1 agent · direct execution'}
+            {councilMode === 'multi' && '2–4 agents · cross-check'}
             {councilMode === 'deep' && '5–10 agents · maximum verification'}
           </span>
 
-          {/* COMPACT AGENT INCREMENT / DECREMENT STEPPER */}
+          {/* DESKTOP STEPPER */}
           <div className="compact-stepper-control">
             <button
               className="stepper-btn"
@@ -160,6 +161,19 @@ export const InputArea: React.FC<InputAreaProps> = ({
         </div>
       </div>
 
+      {/* MOBILE COMPACT CHIP TOOLBAR TRIGGER */}
+      <div className="mobile-only-mode-bar">
+        <button
+          className="mobile-mode-chip-btn"
+          onClick={() => setShowMobileModeSheet(true)}
+          disabled={running || uploading}
+        >
+          <Sparkles size={11} style={{ color: 'var(--accent-color)' }} />
+          <span>MODE: <strong>{councilMode.toUpperCase()}</strong> ({currentCountNum})</span>
+          <ChevronDown size={11} />
+        </button>
+      </div>
+
       <div className="input-box">
         {/* MULTILINE AUTO-RESIZING TEXTAREA */}
         <textarea
@@ -168,7 +182,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
           value={query}
           onChange={(e) => onChangeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask AI Orchestra... (Press Enter to send, Shift + Enter for newline)"
+          placeholder="Ask AI Orchestra..."
           disabled={running || uploading}
           rows={1}
         />
@@ -195,7 +209,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
             <div style={{ position: 'relative', overflow: 'hidden' }}>
               <button className="command-btn" disabled={running || uploading}>
                 <Paperclip size={12} />
-                <span>{uploading ? 'Processing...' : '＋ Attach'}</span>
+                <span className="mobile-hide-text">{uploading ? 'Uploading...' : 'Attach'}</span>
               </button>
               <input
                 type="file"
@@ -223,7 +237,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
                 disabled={running || uploading}
               >
                 <Cpu size={12} />
-                <span>MODEL: {selectedModel || 'Auto'}</span>
+                <span className="model-label-text">{selectedModel ? selectedModel.split('/')[1] || selectedModel : 'Auto'}</span>
                 <ChevronDown size={11} />
               </button>
 
@@ -262,9 +276,9 @@ export const InputArea: React.FC<InputAreaProps> = ({
               )}
             </div>
 
-            {/* AGENTS CONFIG POPOVER TRIGGER */}
+            {/* AGENTS CONFIG TRIGGER (DESKTOP) */}
             <button
-              className={`command-btn ${showAgentPopover ? 'active' : ''}`}
+              className={`command-btn desktop-only-inline ${showAgentPopover ? 'active' : ''}`}
               onClick={() => setShowAgentPopover(!showAgentPopover)}
               disabled={running || uploading}
             >
@@ -286,7 +300,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
               </>
             ) : (
               <>
-                <ArrowUp size={13} />
+                <ArrowUp size={14} />
                 <span>Send</span>
               </>
             )}
@@ -294,7 +308,89 @@ export const InputArea: React.FC<InputAreaProps> = ({
         </div>
       </div>
 
-      {/* AGENT POPOVER MODAL */}
+      {/* MOBILE BOTTOM SHEET FOR MODE & AGENT SELECTOR */}
+      {showMobileModeSheet && (
+        <div className="agent-popover-overlay" onClick={() => setShowMobileModeSheet(false)}>
+          <div className="mobile-bottom-sheet-card" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle-bar" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sliders size={14} style={{ color: 'var(--accent-color)' }} />
+                <span>ORCHESTRATION MODE & AGENTS</span>
+              </div>
+              <button onClick={() => setShowMobileModeSheet(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* MODE OPTIONS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              {[
+                { mode: 'single', title: 'SINGLE', sub: '1 Agent · Direct & Fast Execution' },
+                { mode: 'multi', title: 'MULTI', sub: '2–4 Parallel Agents · Cross-Verification' },
+                { mode: 'deep', title: 'DEEP', sub: '5–10 Specialized Role Agents · Maximum Security' }
+              ].map((item) => (
+                <button
+                  key={item.mode}
+                  className={`mobile-sheet-mode-btn ${councilMode === item.mode ? 'selected' : ''}`}
+                  onClick={() => {
+                    handleSelectMode(item.mode as CouncilMode);
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{item.title}</span>
+                    {councilMode === item.mode && <Check size={14} style={{ color: 'var(--accent-color)' }} />}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {item.sub}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* AGENT STEPPER ON MOBILE */}
+            <div style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '14px', marginTop: '14px' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>MANUAL AGENT COUNT</span>
+                <span className="monochrome-badge">{currentCountNum} ACTIVE</span>
+              </div>
+              <div className="mobile-stepper-row">
+                <button
+                  className="mobile-stepper-btn"
+                  onClick={handleDecrementAgents}
+                  disabled={currentCountNum <= 1}
+                >
+                  <Minus size={14} />
+                </button>
+                <span style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                  {agentCount === 'Auto' ? `AUTO (${currentCountNum})` : `${currentCountNum} AGENTS`}
+                </span>
+                <button
+                  className="mobile-stepper-btn"
+                  onClick={handleIncrementAgents}
+                  disabled={currentCountNum >= 10}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* APPLY */}
+            <div style={{ marginTop: '16px' }}>
+              <button
+                className="send-btn glow-active-steady"
+                style={{ width: '100%', justifyContent: 'center', padding: '12px', minHeight: '44px' }}
+                onClick={() => setShowMobileModeSheet(false)}
+              >
+                <Check size={14} />
+                <span>APPLY & CLOSE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AGENT POPOVER MODAL (DESKTOP) */}
       {showAgentPopover && (
         <div className="agent-popover-overlay" onClick={() => setShowAgentPopover(false)}>
           <div className="agent-popover-card" onClick={(e) => e.stopPropagation()}>
