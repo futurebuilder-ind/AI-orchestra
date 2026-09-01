@@ -200,7 +200,7 @@ Return JSON: {"type": "classification", "explanation": "reasoning", "complexity"
     }
 
     if (availableModels.length === 0) {
-      availableModels = ['gemini-2.0-flash', 'google/gemini-2.0-flash-exp:free'];
+      availableModels = ['google/gemini-2.0-flash-exp:free', 'meta-llama/llama-3.3-70b-instruct:free', 'gemini-2.0-flash'];
     }
 
     const defaultModel = availableModels[0];
