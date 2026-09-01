@@ -8,6 +8,8 @@ import { RunsView } from './components/RunsView';
 import { SettingsView } from './components/SettingsView';
 import { AgentToastContainer } from './components/AgentToastContainer';
 import { CustomizationDrawer } from './components/CustomizationDrawer';
+import { FuturisticHero } from './components/FuturisticHero';
+import { CosmicBackground } from './components/CosmicBackground';
 import { 
   Conversation, Message, StepLog, HardwareInfo, WorkspaceTab, 
   RunItem, PanelConfig, EffectsConfig, WorkspaceDensity, AgentToast, CouncilMode 
@@ -445,6 +447,9 @@ export default function App() {
 
   return (
     <div className={`app-container density-${density} bg-motion-${effectsConfig.backgroundMotion}`}>
+      {/* PROCEDURAL COSMIC BACKGROUND */}
+      <CosmicBackground effects={effectsConfig} />
+
       {/* AGENT TOAST NOTIFICATIONS */}
       <AgentToastContainer
         toasts={toasts}
@@ -665,27 +670,9 @@ export default function App() {
 
         {activeTab === 'orchestra' && (
           <div className="workspace-body">
-            {/* EMPTY STATE */}
+            {/* DYNAMIC FUTURISTIC HERO */}
             {messages.length === 0 && runStepLogs.length === 0 ? (
-              <div className="empty-state-container">
-                <div className="empty-state-logo">AI ORCHESTRA</div>
-                <h1 className="empty-state-title">What are we solving today?</h1>
-                <p className="empty-state-desc">
-                  Ask a question, upload a document context, or solve a programming or reasoning problem.
-                  Local open-source models will evaluate, cross-verify, and synthesize high-reliability answers.
-                </p>
-                <div className="empty-state-shortcuts">
-                  <button className="shortcut-pill" onClick={() => handleRun("Explain Dijkstra's algorithm in simple English.")}>
-                    Explain Dijkstra's algorithm
-                  </button>
-                  <button className="shortcut-pill" onClick={() => handleRun("Write a JavaScript function to compute Fibonacci sequence.")}>
-                    Write Fibonacci JS function
-                  </button>
-                  <button className="shortcut-pill" onClick={() => handleRun("How does local multi-agent orchestration work?")}>
-                    Multi-Agent Orchestration
-                  </button>
-                </div>
-              </div>
+              <FuturisticHero isTyping={query.length > 0} onQuickQuery={(q) => handleRun(q)} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* MESSAGES LIST */}

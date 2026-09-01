@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { Conversation, WorkspaceTab } from '../types';
 
+import { AILogo } from './AILogo';
+
 interface SidebarProps {
   conversations: Conversation[];
   activeConvoId: string | null;
@@ -38,12 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       {/* BRAND HEADER */}
       <div className="sidebar-header">
-        <div className="brand-title">
-          <span>AI ORCHESTRA</span>
-          <span className={`brand-title-badge ${isOnlineDeployed ? 'cloud' : 'local'}`}>
-            {isOnlineDeployed ? 'CLOUD' : 'LOCAL'}
-          </span>
-        </div>
+        <AILogo size={26} showText={true} />
+        <span className={`brand-title-badge ${isOnlineDeployed ? 'cloud' : 'local'}`} style={{ marginLeft: 'auto' }}>
+          {isOnlineDeployed ? 'CLOUD' : 'LOCAL'}
+        </span>
       </div>
 
       {/* NEW CONVERSATION BUTTON */}

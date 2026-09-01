@@ -1848,4 +1848,351 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   ANIMATED HOLOGRAPHIC AI LOGO
+   ========================================================================== */
+.ai-logo-hologram {
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.3);
+}
+
+.ai-logo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ai-logo-ring.outer-ring {
+  border: 1.5px dashed rgba(var(--accent-rgb), 0.5);
+  animation: logoSpin 16s linear infinite;
+}
+
+.ai-logo-ring.middle-ring {
+  inset: 2px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-top-color: var(--accent-color);
+  animation: logoSpinReverse 8s linear infinite;
+}
+
+.ai-logo-core {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(var(--accent-rgb), 0.4), transparent 70%);
+  animation: logoCorePulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes logoSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes logoSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes logoCorePulse {
+  0% { transform: scale(0.92); opacity: 0.6; }
+  100% { transform: scale(1.08); opacity: 1; }
+}
+
+/* ==========================================================================
+   FUTURISTIC HERO & EMPTY STATE
+   ========================================================================== */
+.futuristic-hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 60px;
+  text-align: center;
+  position: relative;
+  min-height: 480px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.futuristic-hero-container.hero-compact {
+  transform: scale(0.94);
+  opacity: 0.75;
+}
+
+.hero-particle-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-orb-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  z-index: 1;
+}
+
+.hero-liquid-glow-ring {
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  filter: blur(12px);
+  opacity: 0.4;
+}
+
+.hero-liquid-glow-ring.ring-1 {
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.65) 0%, transparent 70%);
+  animation: orbLiquidWave 6s ease-in-out infinite alternate;
+}
+
+.hero-liquid-glow-ring.ring-2 {
+  inset: -25px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, transparent 70%);
+  animation: orbLiquidWave 9s ease-in-out infinite alternate-reverse;
+}
+
+.hero-liquid-glow-ring.ring-3 {
+  inset: -35px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 80%);
+  animation: orbLiquidWave 12s linear infinite;
+}
+
+.hero-core-orb {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3) 0%, rgba(59, 130, 246, 0.2) 50%, rgba(10, 10, 15, 0.9) 100%);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 0 35px rgba(var(--accent-rgb), 0.4), inset 0 0 15px rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(16px);
+  animation: orbFloat 4s ease-in-out infinite alternate;
+}
+
+.hero-core-inner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+}
+
+.hero-core-sparkle {
+  animation: sparkleRotate 6s ease-in-out infinite alternate;
+}
+
+@keyframes orbLiquidWave {
+  0% { transform: scale(0.95) rotate(0deg); opacity: 0.35; }
+  50% { transform: scale(1.08) rotate(180deg); opacity: 0.75; }
+  100% { transform: scale(0.95) rotate(360deg); opacity: 0.35; }
+}
+
+@keyframes orbFloat {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
+}
+
+@keyframes sparkleRotate {
+  0% { transform: rotate(0deg) scale(0.9); }
+  100% { transform: rotate(180deg) scale(1.1); }
+}
+
+.hero-header-text {
+  z-index: 1;
+  max-width: 620px;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(var(--accent-rgb), 0.06);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--accent-color);
+  margin-bottom: 12px;
+}
+
+.hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color);
+}
+
+.hero-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.hero-title-gradient {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #3b82f6 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+.hero-suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  width: 100%;
+  z-index: 1;
+}
+
+.hero-suggestion-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-suggestion-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.4);
+  background: var(--bg-surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(var(--accent-rgb), 0.15);
+}
+
+.suggestion-icon-wrapper {
+  padding: 8px;
+  background: rgba(var(--accent-rgb), 0.08);
+  border-radius: 6px;
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.suggestion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.suggestion-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.suggestion-query {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   AGENT DRAWER GRID & LARGE AGENT POOLS
+   ========================================================================== */
+.agent-popover-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.agent-drawer-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 18px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), 0 0 30px rgba(var(--accent-rgb), 0.15);
+  backdrop-filter: blur(24px);
+}
+
+.agent-drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  overflow-y: auto;
+  max-height: 52vh;
+  padding-right: 6px;
+}
+
+.agent-node-card {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.agent-node-card:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-surface-hover);
+}
+
+/* ==========================================================================
+   REDUCED MOTION ACCESSIBILITY
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .ai-logo-ring.outer-ring,
+  .ai-logo-ring.middle-ring,
+  .ai-logo-core,
+  .hero-liquid-glow-ring,
+  .hero-core-orb,
+  .hero-core-sparkle {
+    animation: none !important;
+  }
+
+  .futuristic-hero-container {
+    transition: none !important;
+  }
+}
+
 
