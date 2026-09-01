@@ -115,15 +115,24 @@ export default function App() {
     document.documentElement.style.setProperty('--glow-intensity', `${effectsConfig.glowIntensity || 70}%`);
   }, [effectsConfig]);
 
-  // Mobile Body Scroll Locking
+  // Mobile Body Scroll Locking & Escape Key Listener
   useEffect(() => {
     if (mobileSidebarOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileSidebarOpen) {
+        setMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [mobileSidebarOpen]);
 
@@ -568,28 +577,27 @@ export default function App() {
       )}
 
       {/* SIDEBAR NAVIGATION */}
-      {sidebarOpen && (
-        <Sidebar
-          conversations={conversations}
-          activeConvoId={activeConvoId}
-          activeTab={activeTab}
-          ollamaRunning={ollamaRunning}
-          activeModelName={activeModelDisplay}
-          isOpen={sidebarOpen || mobileSidebarOpen}
-          onSelectConvo={(id) => {
-            setActiveConvoId(id);
-            setActiveTab('orchestra');
-            setMobileSidebarOpen(false);
-          }}
-          onStartNewChat={startNewChat}
-          onDeleteConvo={deleteConvo}
-          onSelectTab={(tab) => {
-            setActiveTab(tab);
-            setMobileSidebarOpen(false);
-          }}
-          onOpenCustomization={() => setIsCustomizationOpen(true)}
-        />
-      )}
+      <Sidebar
+        conversations={conversations}
+        activeConvoId={activeConvoId}
+        activeTab={activeTab}
+        ollamaRunning={ollamaRunning}
+        activeModelName={activeModelDisplay}
+        isOpen={mobileSidebarOpen}
+        isClosed={!sidebarOpen}
+        onSelectConvo={(id) => {
+          setActiveConvoId(id);
+          setActiveTab('orchestra');
+          setMobileSidebarOpen(false);
+        }}
+        onStartNewChat={startNewChat}
+        onDeleteConvo={deleteConvo}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          setMobileSidebarOpen(false);
+        }}
+        onOpenCustomization={() => setIsCustomizationOpen(true)}
+      />
 
       {/* MAIN WORKSPACE */}
       <main className="main-workspace">

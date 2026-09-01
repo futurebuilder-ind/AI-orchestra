@@ -14,6 +14,7 @@ interface SidebarProps {
   ollamaRunning: boolean;
   activeModelName: string;
   isOpen: boolean;
+  isClosed?: boolean;
   onSelectConvo: (id: string) => void;
   onStartNewChat: () => void;
   onDeleteConvo: (id: string, e: React.MouseEvent) => void;
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ollamaRunning,
   activeModelName,
   isOpen,
+  isClosed = false,
   onSelectConvo,
   onStartNewChat,
   onDeleteConvo,
@@ -37,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isOnlineDeployed = typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''} ${isClosed ? 'closed' : ''}`}>
       {/* BRAND HEADER */}
       <div className="sidebar-header">
         <AILogo size={26} showText={true} />
