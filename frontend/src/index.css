@@ -1440,6 +1440,72 @@ html, body {
   animation: scaleUp 0.2s ease;
 }
 
+/* Mode & Agent Popover Menu */
+.mode-popover-menu {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  width: 270px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.95), 0 0 16px rgba(255, 255, 255, 0.15);
+  z-index: 120;
+  animation: slideUp 0.18s ease;
+}
+
+.mode-popover-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.mode-option-btn {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: var(--transition-fast);
+}
+
+.mode-option-btn:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-surface-hover);
+}
+
+.mode-option-btn.selected {
+  border-color: var(--text-primary);
+  background: var(--bg-surface-active);
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.08);
+}
+
+.popover-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+/* Model Popover Dropdown */
+.model-popover-menu {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  width: 260px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9), 0 0 16px rgba(255, 255, 255, 0.1);
+  z-index: 120;
+  animation: slideUp 0.18s ease;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
