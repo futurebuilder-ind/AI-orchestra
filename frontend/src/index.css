@@ -434,6 +434,7 @@ html, body {
   width: 100vw;
   background: var(--bg-base);
   overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 /* Sidebar Navigation */
@@ -445,7 +446,11 @@ html, body {
   flex-direction: column;
   z-index: 20;
   flex-shrink: 0;
-  transition: transform var(--transition-normal);
+  transition: transform var(--transition-normal), width 0.3s ease, background-color 0.3s ease;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
 }
 
 .sidebar-header {

@@ -50,6 +50,7 @@ export interface EffectsConfig {
   enableToasts: boolean;
   reduceMotion: boolean;
   presetColorName: PresetColor;
+  colorPreset?: PresetColor;
   accentColor: string; // e.g. '#ffffff', '#3b82f6'
   glowIntensity: number; // 0 - 100
   glowRadius: number; // 4 - 24

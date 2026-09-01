@@ -73,6 +73,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
         onChangeAgentCount('8');
       }
     }
+    setShowModePopover(false);
   };
 
   const currentCountNum = agentCount === 'Auto' ? (councilMode === 'single' ? 1 : councilMode === 'multi' ? 3 : 8) : parseInt(agentCount);

@@ -85,11 +85,13 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
               {PRESET_COLORS.map((preset) => (
                 <button
                   key={preset.name}
-                  className={`color-preset-btn ${effects.presetColorName === preset.name ? 'active' : ''}`}
+                  className={`color-preset-btn ${(effects.presetColorName === preset.name || (effects as any).colorPreset === preset.name) ? 'active' : ''}`}
                   onClick={() => {
                     onChangeEffect('presetColorName', preset.name);
+                    onChangeEffect('colorPreset', preset.name);
                     onChangeEffect('accentColor', preset.hex);
                   }}
+                  aria-label={`Select ${preset.label} theme`}
                 >
                   <span className="color-dot" style={{ backgroundColor: preset.hex }} />
                   <span style={{ fontSize: '0.68rem', textTransform: 'capitalize' }}>{preset.name}</span>

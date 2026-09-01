@@ -28,6 +28,15 @@ export default function App() {
   // Navigation & Workspace State
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('orchestra');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ai_orchestra_sidebar_open');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ai_orchestra_sidebar_open', JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -64,8 +73,9 @@ export default function App() {
       enableAnimations: true,
       enableToasts: true,
       reduceMotion: false,
-      presetColorName: 'white',
-      accentColor: '#ffffff',
+      presetColorName: 'cyan',
+      colorPreset: 'cyan',
+      accentColor: '#00f0ff',
       glowIntensity: 70,
       glowRadius: 12,
       animationSpeed: 1.0,
@@ -82,20 +92,25 @@ export default function App() {
 
   // Dynamic CSS variables for color accent and glow effects
   useEffect(() => {
-    const color = effectsConfig.accentColor || '#ffffff';
+    const presetMap: Record<string, { hex: string; rgb: string }> = {
+      white: { hex: '#ffffff', rgb: '255, 255, 255' },
+      blue: { hex: '#3b82f6', rgb: '59, 130, 246' },
+      purple: { hex: '#a855f7', rgb: '168, 85, 247' },
+      cyan: { hex: '#00f0ff', rgb: '0, 240, 255' },
+      green: { hex: '#10b981', rgb: '16, 185, 129' },
+      orange: { hex: '#f97316', rgb: '249, 115, 22' },
+      red: { hex: '#ef4444', rgb: '239, 68, 68' }
+    };
+
+    const presetName = (effectsConfig as any).colorPreset || effectsConfig.presetColorName || 'cyan';
+    const preset = presetMap[presetName] || { hex: effectsConfig.accentColor || '#00f0ff', rgb: '0, 240, 255' };
+
+    const color = preset.hex;
+    const rgb = preset.rgb;
+
     document.documentElement.style.setProperty('--accent-color', color);
+    document.documentElement.style.setProperty('--accent-rgb', rgb);
     document.documentElement.style.setProperty('--glow-intensity', `${effectsConfig.glowIntensity || 70}%`);
-    
-    // Hex to RGB conversion
-    const hex = color.replace('#', '');
-    if (hex.length === 6) {
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      document.documentElement.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
-    } else {
-      document.documentElement.style.setProperty('--accent-rgb', '255, 255, 255');
-    }
   }, [effectsConfig]);
 
   // Agent Toasts
@@ -536,26 +551,28 @@ export default function App() {
       )}
 
       {/* SIDEBAR NAVIGATION */}
-      <Sidebar
-        conversations={conversations}
-        activeConvoId={activeConvoId}
-        activeTab={activeTab}
-        ollamaRunning={ollamaRunning}
-        activeModelName={activeModelDisplay}
-        isOpen={mobileSidebarOpen}
-        onSelectConvo={(id) => {
-          setActiveConvoId(id);
-          setActiveTab('orchestra');
-          setMobileSidebarOpen(false);
-        }}
-        onStartNewChat={startNewChat}
-        onDeleteConvo={deleteConvo}
-        onSelectTab={(tab) => {
-          setActiveTab(tab);
-          setMobileSidebarOpen(false);
-        }}
-        onOpenCustomization={() => setIsCustomizationOpen(true)}
-      />
+      {sidebarOpen && (
+        <Sidebar
+          conversations={conversations}
+          activeConvoId={activeConvoId}
+          activeTab={activeTab}
+          ollamaRunning={ollamaRunning}
+          activeModelName={activeModelDisplay}
+          isOpen={sidebarOpen || mobileSidebarOpen}
+          onSelectConvo={(id) => {
+            setActiveConvoId(id);
+            setActiveTab('orchestra');
+            setMobileSidebarOpen(false);
+          }}
+          onStartNewChat={startNewChat}
+          onDeleteConvo={deleteConvo}
+          onSelectTab={(tab) => {
+            setActiveTab(tab);
+            setMobileSidebarOpen(false);
+          }}
+          onOpenCustomization={() => setIsCustomizationOpen(true)}
+        />
+      )}
 
       {/* MAIN WORKSPACE */}
       <main className="main-workspace">
@@ -564,9 +581,14 @@ export default function App() {
           <div className="header-left">
             <button 
               className="action-btn mobile-menu-btn" 
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              onClick={() => {
+                setSidebarOpen(!sidebarOpen);
+                setMobileSidebarOpen(!mobileSidebarOpen);
+              }}
+              title="Toggle Sidebar Menu"
+              aria-label="Toggle Sidebar Menu"
             >
-              <Menu size={14} />
+              <Menu size={14} style={{ color: 'var(--accent-color)' }} />
             </button>
             <span className="header-title">
               {activeTab === 'orchestra' && (activeConvoId ? 'CHATS // SESSION LOG' : 'CHATS // NEW SESSION')}
@@ -579,7 +601,7 @@ export default function App() {
           </div>
 
           <div className="header-actions">
-            <button className="action-btn" onClick={() => setIsCustomizationOpen(true)}>
+            <button className="action-btn" onClick={() => setIsCustomizationOpen(true)} aria-label="Customize Layout">
               <Sliders size={13} style={{ color: 'var(--accent-color)' }} />
               <span>Customize Layout</span>
             </button>
