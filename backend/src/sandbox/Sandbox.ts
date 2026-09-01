@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 
 export interface SandboxResult {
   success: boolean;
@@ -41,11 +41,11 @@ export function executeCode(code: string): Promise<SandboxResult> {
     let stderrData = '';
     let completed = false;
 
-    worker.stdout.on('data', (data) => {
+    worker.stdout.on('data', (data: Buffer | string) => {
       stdoutData += data.toString();
     });
 
-    worker.stderr.on('data', (data) => {
+    worker.stderr.on('data', (data: Buffer | string) => {
       stderrData += data.toString();
     });
 
@@ -55,7 +55,7 @@ export function executeCode(code: string): Promise<SandboxResult> {
         completed = true;
         try {
           worker.kill('SIGKILL');
-        } catch (e) {}
+        } catch (e: unknown) {}
         resolve({
           success: false,
           stdout: stdoutData,
@@ -65,7 +65,7 @@ export function executeCode(code: string): Promise<SandboxResult> {
       }
     }, 2000);
 
-    worker.on('close', (code) => {
+    worker.on('close', (code: number | null) => {
       if (!completed) {
         completed = true;
         clearTimeout(timeout);
@@ -78,7 +78,7 @@ export function executeCode(code: string): Promise<SandboxResult> {
       }
     });
 
-    worker.on('error', (err) => {
+    worker.on('error', (err: Error) => {
       if (!completed) {
         completed = true;
         clearTimeout(timeout);
