@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:backend": "node backend/node_modules/typescript/bin/tsc -p backend/tsconfig.json && node backend/dist/server.js",
-    "dev:frontend": "node frontend/node_modules/vite/bin/vite.js --config frontend/vite.config.ts",
+    "dev:backend": "npx tsc -p backend/tsconfig.json && node backend/dist/server.js",
+    "dev:frontend": "npx vite --config frontend/vite.config.ts",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build:backend": "node backend/node_modules/typescript/bin/tsc -p backend/tsconfig.json",
-    "build:frontend": "node backend/node_modules/typescript/bin/tsc -p frontend/tsconfig.json && node frontend/node_modules/vite/bin/vite.js build --config frontend/vite.config.ts",
+    "build:backend": "npx tsc -p backend/tsconfig.json",
+    "build:frontend": "npx tsc -p frontend/tsconfig.json && npx vite build --config frontend/vite.config.ts",
     "build": "npm run build:backend && npm run build:frontend",
-    "test": "node backend/node_modules/typescript/bin/tsc -p backend/tsconfig.json && node backend/dist/tests/run-tests.js"
+    "test": "npx tsc -p backend/tsconfig.json && node backend/dist/tests/run-tests.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
