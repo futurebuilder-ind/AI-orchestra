@@ -115,6 +115,18 @@ export default function App() {
     document.documentElement.style.setProperty('--glow-intensity', `${effectsConfig.glowIntensity || 70}%`);
   }, [effectsConfig]);
 
+  // Mobile Body Scroll Locking
+  useEffect(() => {
+    if (mobileSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileSidebarOpen]);
+
   // Agent Toasts
   const [toasts, setToasts] = useState<AgentToast[]>([]);
 

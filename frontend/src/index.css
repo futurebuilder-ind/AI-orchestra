@@ -1802,6 +1802,15 @@ html, body {
 
   .final-answer-box {
     padding: 14px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  pre, code {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   .customization-drawer-window {
