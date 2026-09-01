@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Plus, Trash2, Cpu, Activity, FileText, 
-  Settings, BarChart2, Layers, Sliders
+  Settings, BarChart2, Layers, Sliders, ShieldCheck, Heart
 } from 'lucide-react';
 import { Conversation, WorkspaceTab } from '../types';
 
@@ -32,13 +32,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   onOpenCustomization
 }) => {
+  const isOnlineDeployed = typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       {/* BRAND HEADER */}
       <div className="sidebar-header">
         <div className="brand-title">
           <span>AI ORCHESTRA</span>
-          <span className="brand-title-badge">LOCAL</span>
+          <span className={`brand-title-badge ${isOnlineDeployed ? 'cloud' : 'local'}`}>
+            {isOnlineDeployed ? 'CLOUD' : 'LOCAL'}
+          </span>
         </div>
       </div>
 
@@ -50,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* RECENT CONVERSATIONS */}
       <div className="nav-section" style={{ flex: 1, overflowY: 'auto' }}>
-        <div className="nav-section-title">RECENT</div>
+        <div className="nav-section-title">RECENT SESSIONS</div>
         {conversations.length === 0 ? (
           <div style={{ padding: '8px 10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             No recent sessions
@@ -129,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button className="nav-item" onClick={onOpenCustomization}>
           <div className="nav-item-left">
-            <Sliders size={14} />
+            <Sliders size={14} style={{ color: 'var(--accent-color)' }} />
             <span>Customize Layout</span>
           </div>
         </button>
@@ -155,15 +159,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* FOOTER STATUS */}
+      {/* FOOTER STATUS & DEVELOPER BADGE */}
       <div className="sidebar-footer">
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-          <span>ENGINE</span>
-          <span>{ollamaRunning ? '[ONLINE]' : '[OFFLINE]'}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '4px' }}>
+          <span style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>SYSTEM STATUS</span>
+          <span className="status-badge-inline">
+            {isOnlineDeployed ? '● CLOUD ONLINE' : '● SYSTEM READY'}
+          </span>
         </div>
+
         <div className="agent-status-tag">
           <span>●</span>
-          <span>{activeModelName} — Local — {ollamaRunning ? 'Ready' : 'Offline'}</span>
+          <span>{activeModelName} • {ollamaRunning ? 'Ollama Ready' : 'Ollama Offline'}</span>
+        </div>
+
+        {/* DEVELOPER CREDIT WITH BREATHING GLOW */}
+        <div className="developer-credit-tag">
+          <Heart size={11} style={{ color: 'var(--accent-color)', fill: 'rgba(var(--accent-rgb), 0.3)' }} />
+          <span>Architected by <strong className="developer-glow-text">Avee Ranjan</strong></span>
         </div>
       </div>
     </aside>

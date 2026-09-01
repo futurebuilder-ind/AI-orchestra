@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StepLog, EffectsConfig, AgentRunDetails, CouncilMode } from '../types';
-import { ChevronDown, ChevronUp, Cpu, Check, Activity, Clock, AlertTriangle, Layers, Minimize2, Maximize2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Cpu, Check, Activity, Clock, AlertTriangle, Layers, Minimize2, Maximize2, X, Eye } from 'lucide-react';
 
 interface OrchestrationVisualizerProps {
   stepLogs: StepLog[];
@@ -35,6 +35,7 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AgentRunDetails | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAgentDrawer, setShowAgentDrawer] = useState(false);
 
   const getStepStatus = (stepName: string): 'pending' | 'running' | 'completed' | 'failed' => {
     const found = stepLogs.find((s) => s.step === stepName || (stepName === 'parallel' && s.step === 'parallel_execution'));
@@ -65,7 +66,10 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
         status: parallelStatus === 'completed' ? 'completed' : parallelStatus === 'running' ? 'processing' : 'queued'
       }));
 
-  const activeAgentCount = agentPoolData.length || 1;
+  const activeCount = agentPoolData.filter(a => a.status === 'processing').length;
+  const completedCount = agentPoolData.filter(a => a.status === 'completed').length;
+  const verifyingCount = criticStatus === 'running' ? 1 : 0;
+  const queuedCount = agentPoolData.filter(a => a.status === 'queued').length;
 
   const getNodeClass = (status: 'pending' | 'running' | 'completed' | 'failed') => {
     if (status === 'running' && effects.enableGlow && !effects.reduceMotion) {
@@ -81,203 +85,204 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
 
   return (
     <div className={`orchestration-card ${effects.extremeVisualMode ? 'extreme-visual-mode' : ''}`}>
-      {/* HEADER BAR WITH COLLAPSE TOGGLE */}
+      {/* COMPACT OVERVIEW HEADER */}
       <div className="orchestration-card-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Layers size={13} style={{ color: 'var(--accent-color)' }} />
-          <span>LIVE ORCHESTRATION PIPELINE ({councilMode.toUpperCase()} MODE)</span>
+          <span>ORCHESTRATION // {councilMode.toUpperCase()} PIPELINE</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span className="status-indicator">
-            {synthesisStatus === 'completed' ? '✓ SYNTHESIZED' : parallelStatus === 'running' ? '● EXECUTING' : '○ READY'}
-          </span>
+        {/* AGENT SUMMARY BADGES */}
+        <div className="orchestra-summary-badges">
+          <span className="summary-pill active">● {activeCount || agentPoolData.length} ACTIVE</span>
+          <span className="summary-pill completed">✓ {completedCount} COMPLETED</span>
+          {verifyingCount > 0 && <span className="summary-pill verifying">● VERIFYING</span>}
+          
+          <button
+            className="command-btn view-agents-btn"
+            onClick={() => setShowAgentDrawer(true)}
+            title="View detailed agent pool drawer"
+          >
+            <Eye size={12} />
+            <span>View Agents ({agentPoolData.length})</span>
+          </button>
+
           <button
             className="command-btn collapse-toggle-btn"
             onClick={() => setIsCollapsed(!isCollapsed)}
             title={isCollapsed ? 'Expand Orchestra' : 'Collapse Orchestra'}
           >
-            {isCollapsed ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
-            <span>{isCollapsed ? 'EXPAND ORCHESTRA' : 'COLLAPSE ORCHESTRA'}</span>
+            {isCollapsed ? <Maximize2 size={11} /> : <Minimize2 size={11} />}
           </button>
         </div>
       </div>
 
-      {/* COLLAPSED SUMMARY VIEW */}
+      {/* COLLAPSED SUMMARY BAR */}
       {isCollapsed ? (
         <div className="collapsed-orchestra-bar">
-          <span className="collapsed-pill">ORCHESTRATION</span>
-          <span className="collapsed-pill">✓ {activeAgentCount} AGENT{activeAgentCount === 1 ? '' : 'S'} ({councilMode.toUpperCase()})</span>
+          <span className="collapsed-pill">ORCHESTRATION ACTIVE</span>
+          <span className="collapsed-pill">✓ {agentPoolData.length} AGENT{agentPoolData.length === 1 ? '' : 'S'}</span>
           {councilMode !== 'single' && <span className="collapsed-pill">✓ VERIFIED</span>}
-          <span className="collapsed-pill">✓ SYNTHESIZED</span>
+          <span className="collapsed-pill">✓ CONSENSUS SYNTHESIZED</span>
         </div>
       ) : (
-        /* EXPANDED GRAPH VIEW */
+        /* EXPANDED PIPELINE GRAPH */
         <div className="graph-container">
-          
-          {/* SINGLE MODE FLOW: USER -> ORCHESTRATOR -> MODEL -> FINAL ANSWER */}
           {councilMode === 'single' ? (
             <div className="single-mode-graph">
-              <div className="graph-node-pill">
-                <span>USER PROMPT</span>
-              </div>
-              <svg width="2" height="20" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="20" stroke="var(--border-medium)" strokeWidth="1" />
-                {effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="20" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
-              </svg>
-
               <div className={`graph-node-pill ${getNodeClass(analysisStatus)}`}>
                 <span>ORCHESTRATOR ROUTER</span>
                 <span>{analysisStatus === 'completed' ? '✓' : '●'}</span>
               </div>
 
-              <svg width="2" height="20" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="20" stroke="var(--border-medium)" strokeWidth="1" />
+              <svg width="2" height="16" style={{ overflow: 'visible' }}>
+                <line x1="1" y1="0" x2="1" y2="16" stroke="var(--border-medium)" strokeWidth="1" />
                 {effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="20" dur={particleDuration} repeatCount="indefinite" />
+                  <circle cx="1" cy="0" r="2" fill="var(--accent-color)">
+                    <animate attributeName="cy" from="0" to="16" dur={particleDuration} repeatCount="indefinite" />
                   </circle>
                 )}
               </svg>
 
               <div className={`graph-node-pill single-model-node ${getNodeClass(parallelStatus)}`}>
-                <Cpu size={14} />
+                <Cpu size={13} />
                 <span>{selectedModels[0] || 'Qwen 3 4B'} (1 AGENT)</span>
-                <span>{parallelStatus === 'completed' ? '✓ COMPLETE' : '● EXECUTING'}</span>
+                <span>{parallelStatus === 'completed' ? '✓ COMPLETE' : '● RUNNING'}</span>
               </div>
 
-              <svg width="2" height="20" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="20" stroke="var(--border-medium)" strokeWidth="1" />
+              <svg width="2" height="16" style={{ overflow: 'visible' }}>
+                <line x1="1" y1="0" x2="1" y2="16" stroke="var(--border-medium)" strokeWidth="1" />
                 {effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="20" dur={particleDuration} repeatCount="indefinite" />
+                  <circle cx="1" cy="0" r="2" fill="var(--accent-color)">
+                    <animate attributeName="cy" from="0" to="16" dur={particleDuration} repeatCount="indefinite" />
                   </circle>
                 )}
               </svg>
 
               <div className={`graph-node-pill ${getNodeClass(synthesisStatus)}`}>
-                <span>FINAL SYNTHESIZED ANSWER</span>
+                <span>FINAL SOLUTION</span>
                 <span>{synthesisStatus === 'completed' ? '✓' : '○'}</span>
               </div>
             </div>
           ) : (
-            /* MULTI / DEEP MODE FLOW: ANALYSIS -> AGENT POOL -> CRITIC -> SYNTHESIS */
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '8px' }}>
-              
-              {/* NODE 1: TASK ANALYSIS */}
-              <div 
-                className={`graph-node-pill ${getNodeClass(analysisStatus)}`}
-                style={{ width: '260px', justifyContent: 'space-between' }}
-              >
-                <span>1. TASK ANALYSIS & ROUTING</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '6px' }}>
+              {/* STAGE 1: ROUTER */}
+              <div className={`graph-node-pill ${getNodeClass(analysisStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
+                <span>1. ROUTER & ANALYSIS</span>
                 <span>{analysisStatus === 'completed' ? '✓' : analysisStatus === 'running' ? '●' : '○'}</span>
               </div>
 
-              {/* CONNECTING SVG */}
-              <svg width="2" height="18" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="18" stroke="var(--border-medium)" strokeWidth="1" />
-                {analysisStatus === 'running' && effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="18" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
+              <svg width="2" height="14" style={{ overflow: 'visible' }}>
+                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
               </svg>
 
-              {/* AGENT COUNCIL POOL GRID */}
-              <div className="agent-pool-grid">
-                {agentPoolData.map((agent, idx) => (
-                  <div
-                    key={idx}
-                    className={`agent-node-card node-status-${agent.status} ${
-                      agent.status === 'processing' ? 'glow-active-pulse' : agent.status === 'completed' ? 'glow-active-steady' : ''
-                    }`}
-                    onClick={() => setSelectedAgent(selectedAgent?.agentId === agent.agentId ? null : agent)}
-                  >
-                    <div className="agent-card-header">
-                      <span>{agent.agentId}</span>
-                      <span className="agent-status-label">
-                        {agent.status === 'completed' && '✓ READY'}
-                        {agent.status === 'processing' && '● RUNNING'}
-                        {agent.status === 'queued' && '○ QUEUED'}
-                        {agent.status === 'failed' && '✕ FAILED'}
-                      </span>
-                    </div>
-
-                    <div className="agent-model-name">
-                      {agent.modelName}
-                    </div>
-
-                    <div className="agent-role-row">
-                      <span>{agent.role}</span>
-                      {agent.executionTimeSec && <span>{agent.executionTimeSec}s</span>}
-                    </div>
-                  </div>
-                ))}
+              {/* STAGE 2: PARALLEL AGENTS POOL OVERVIEW */}
+              <div className={`graph-node-pill ${getNodeClass(parallelStatus)}`} style={{ width: '280px', justifyContent: 'space-between' }}>
+                <span>2. PARALLEL AGENT POOL ({agentPoolData.length} AGENTS)</span>
+                <span>{parallelStatus === 'completed' ? '✓' : parallelStatus === 'running' ? '●' : '○'}</span>
               </div>
 
-              {/* EXPANDED DETAILS */}
-              {selectedAgent && (
-                <div className="agent-detail-popdown">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 700 }}>{selectedAgent.agentId} — {selectedAgent.modelName} ({selectedAgent.role})</span>
-                    <button onClick={() => setSelectedAgent(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                      ✕
-                    </button>
-                  </div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
-                    {selectedAgent.error ? `Error: ${selectedAgent.error}` : selectedAgent.resultSummary || 'Agent output summary generated...'}
-                  </div>
-                </div>
-              )}
-
-              {/* CONNECTING SVG */}
-              <svg width="2" height="18" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="18" stroke="var(--border-medium)" strokeWidth="1" />
-                {parallelStatus === 'running' && effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="18" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
+              <svg width="2" height="14" style={{ overflow: 'visible' }}>
+                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
               </svg>
 
-              {/* NODE 3: VERIFICATION & CRITIC */}
-              <div
-                className={`graph-node-pill ${getNodeClass(criticStatus)}`}
-                style={{ width: '260px', justifyContent: 'space-between' }}
-              >
+              {/* STAGE 3: CRITIC */}
+              <div className={`graph-node-pill ${getNodeClass(criticStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
                 <span>3. VERIFICATION & CRITIC</span>
                 <span>{criticStatus === 'completed' ? '✓' : criticStatus === 'running' ? '●' : '○'}</span>
               </div>
 
-              {/* CONNECTING SVG */}
-              <svg width="2" height="18" style={{ overflow: 'visible' }}>
-                <line x1="1" y1="0" x2="1" y2="18" stroke="var(--border-medium)" strokeWidth="1" />
-                {criticStatus === 'running' && effects.enableAnimations && !effects.reduceMotion && (
-                  <circle cx="1" cy="0" r="2.5" fill="var(--accent-color)">
-                    <animate attributeName="cy" from="0" to="18" dur={particleDuration} repeatCount="indefinite" />
-                  </circle>
-                )}
+              <svg width="2" height="14" style={{ overflow: 'visible' }}>
+                <line x1="1" y1="0" x2="1" y2="14" stroke="var(--border-medium)" strokeWidth="1" />
               </svg>
 
-              {/* NODE 4: SYNTHESIS */}
-              <div
-                className={`graph-node-pill ${getNodeClass(synthesisStatus)}`}
-                style={{ width: '260px', justifyContent: 'space-between' }}
-              >
-                <span>4. SYNTHESIS & CONSENSUS</span>
+              {/* STAGE 4: SYNTHESIS */}
+              <div className={`graph-node-pill ${getNodeClass(synthesisStatus)}`} style={{ width: '240px', justifyContent: 'space-between' }}>
+                <span>4. SYNTHESIS CONSENSUS</span>
                 <span>{synthesisStatus === 'completed' ? '✓' : synthesisStatus === 'running' ? '●' : '○'}</span>
               </div>
-
             </div>
           )}
+        </div>
+      )}
 
+      {/* AGENT POOL DRAWER MODAL */}
+      {showAgentDrawer && (
+        <div className="agent-popover-overlay" onClick={() => setShowAgentDrawer(false)}>
+          <div className="agent-drawer-card" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={14} style={{ color: 'var(--accent-color)' }} />
+                <span>AGENT COUNCIL POOL DETAILS ({agentPoolData.length} AGENTS)</span>
+              </div>
+              <button onClick={() => setShowAgentDrawer(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="agent-drawer-grid">
+              {agentPoolData.map((agent, idx) => (
+                <div
+                  key={idx}
+                  className={`agent-node-card node-status-${agent.status} ${
+                    agent.status === 'processing' ? 'glow-active-pulse' : agent.status === 'completed' ? 'glow-active-steady' : ''
+                  }`}
+                  onClick={() => setSelectedAgent(selectedAgent?.agentId === agent.agentId ? null : agent)}
+                >
+                  <div className="agent-card-header">
+                    <span>{agent.agentId}</span>
+                    <span className="agent-status-label">
+                      {agent.status === 'completed' && '✓ COMPLETED'}
+                      {agent.status === 'processing' && '● RUNNING'}
+                      {agent.status === 'queued' && '○ QUEUED'}
+                      {agent.status === 'failed' && '✕ FAILED'}
+                    </span>
+                  </div>
+
+                  <div className="agent-model-name">
+                    {agent.modelName}
+                  </div>
+
+                  <div className="agent-role-row">
+                    <span>Role: {agent.role}</span>
+                    {agent.executionTimeSec && <span>{agent.executionTimeSec}s</span>}
+                  </div>
+
+                  {agent.resultSummary && (
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '6px', borderTop: '1px solid var(--border-subtle)', paddingTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {agent.resultSummary.substring(0, 70)}...
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* EXPANDED INDIVIDUAL AGENT DETAIL */}
+            {selectedAgent && (
+              <div className="agent-detail-popdown">
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '6px', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 700 }}>{selectedAgent.agentId} — {selectedAgent.modelName} ({selectedAgent.role})</span>
+                  <button onClick={() => setSelectedAgent(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    ✕
+                  </button>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {selectedAgent.error ? `Error: ${selectedAgent.error}` : selectedAgent.resultSummary || 'Agent output summary generated...'}
+                </div>
+              </div>
+            )}
+
+            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                className="command-btn active"
+                onClick={() => setShowAgentDrawer(false)}
+              >
+                Close Drawer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 };
-

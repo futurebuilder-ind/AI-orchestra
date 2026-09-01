@@ -47,7 +47,7 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px', marginBottom: '16px' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sliders size={14} style={{ color: 'var(--accent-color)' }} />
-            <span>ANIMATION & WORKSPACE CUSTOMIZATION</span>
+            <span>CUSTOMIZE LAYOUT & GLOW SYSTEM</span>
           </div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
             <X size={16} />
@@ -62,7 +62,7 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
               <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>EXTREME VISUAL MODE</div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                  Unlocks high-density particles, background motion grid, node halos, and streaming connection lines.
+                  Unlocks node halos, streaming particles, active node pulses, and ambient background grid.
                 </div>
               </div>
             </div>
@@ -79,7 +79,7 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
           <div style={{ marginBottom: '16px' }}>
             <div className="group-title" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Palette size={12} />
-              <span>ACCENT & ANIMATION COLOR</span>
+              <span>ACCENT & GLOW COLOR</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
               {PRESET_COLORS.map((preset) => (
@@ -98,55 +98,20 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
             </div>
           </div>
 
-          {/* ANIMATION MOVEMENT & GLOW STYLES */}
+          {/* GLOW STYLE (NONE, PULSE, BREATHING, FLOW, SCAN, ORBIT, AURORA) */}
           <div style={{ marginBottom: '16px' }}>
-            <div className="group-title" style={{ marginBottom: '8px' }}>ANIMATION MOVEMENT</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
-              {(['subtle', 'smooth', 'dynamic', 'cinematic', 'extreme'] as MovementMode[]).map((m) => (
+            <div className="group-title" style={{ marginBottom: '6px' }}>GLOW ANIMATION STYLE</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+              {(['none', 'breathing', 'pulse', 'flow', 'scan', 'orbit', 'aurora'] as GlowStyle[]).map((g) => (
                 <button
-                  key={m}
-                  className={`command-btn ${effects.movementMode === m ? 'active' : ''}`}
-                  style={{ fontSize: '0.65rem', textTransform: 'uppercase', justifyContent: 'center', padding: '5px 2px' }}
-                  onClick={() => onChangeEffect('movementMode', m)}
+                  key={g}
+                  className={`command-btn ${(effects.glowStyle || 'breathing') === g ? 'active' : ''}`}
+                  style={{ fontSize: '0.68rem', textTransform: 'uppercase', justifyContent: 'center', padding: '6px' }}
+                  onClick={() => onChangeEffect('glowStyle', g)}
                 >
-                  {m}
+                  ● {g}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* GLOW STYLE & CONNECTION STYLE */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-            <div>
-              <div className="group-title" style={{ marginBottom: '6px' }}>GLOW STYLE</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {(['static', 'breathing', 'pulse', 'flow', 'orbit'] as GlowStyle[]).map((g) => (
-                  <button
-                    key={g}
-                    className={`command-btn ${effects.glowStyle === g ? 'active' : ''}`}
-                    style={{ fontSize: '0.7rem', textTransform: 'uppercase', justifyContent: 'flex-start', padding: '4px 8px' }}
-                    onClick={() => onChangeEffect('glowStyle', g)}
-                  >
-                    ● {g}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="group-title" style={{ marginBottom: '6px' }}>CONNECTION STYLE</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {(['none', 'flow', 'pulse', 'particle_flow'] as ConnectionStyle[]).map((c) => (
-                  <button
-                    key={c}
-                    className={`command-btn ${effects.connectionStyle === c ? 'active' : ''}`}
-                    style={{ fontSize: '0.7rem', textTransform: 'uppercase', justifyContent: 'flex-start', padding: '4px 8px' }}
-                    onClick={() => onChangeEffect('connectionStyle', c)}
-                  >
-                    ● {c.replace('_', ' ')}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -169,15 +134,15 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
 
             <div>
               <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                CONNECTION SPEED ({(effects.connectionSpeed || 1.0).toFixed(1)}x)
+                ANIMATION SPEED ({(effects.animationSpeed || 1.0).toFixed(1)}x)
               </div>
               <input
                 type="range"
                 min={0.5}
                 max={2.0}
                 step={0.1}
-                value={effects.connectionSpeed || 1.0}
-                onChange={(e) => onChangeEffect('connectionSpeed', parseFloat(e.target.value))}
+                value={effects.animationSpeed || 1.0}
+                onChange={(e) => onChangeEffect('animationSpeed', parseFloat(e.target.value))}
                 className="monochrome-slider"
                 style={{ width: '100%' }}
               />
@@ -185,23 +150,6 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
           </div>
 
           {/* BACKGROUND MOTION & WORKSPACE DENSITY */}
-          <div style={{ marginBottom: '16px' }}>
-            <div className="group-title" style={{ marginBottom: '6px' }}>BACKGROUND AMBIENT MOTION</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
-              {(['off', 'subtle', 'medium', 'dynamic'] as BackgroundMotion[]).map((bg) => (
-                <button
-                  key={bg}
-                  className={`command-btn ${effects.backgroundMotion === bg ? 'active' : ''}`}
-                  style={{ fontSize: '0.7rem', textTransform: 'uppercase', justifyContent: 'center', padding: '5px' }}
-                  onClick={() => onChangeEffect('backgroundMotion', bg)}
-                >
-                  {bg}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* WORKSPACE DENSITY */}
           <div style={{ marginBottom: '16px' }}>
             <div className="group-title" style={{ marginBottom: '6px' }}>LAYOUT DENSITY</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
@@ -273,4 +221,3 @@ export const CustomizationDrawer: React.FC<CustomizationDrawerProps> = ({
     </div>
   );
 };
-

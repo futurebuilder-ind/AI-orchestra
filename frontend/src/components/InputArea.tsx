@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Paperclip, X, Cpu, ArrowUp, Users, ChevronDown, Check, Sliders } from 'lucide-react';
+import { Paperclip, X, Cpu, ArrowUp, Users, ChevronDown, Check, Sliders, Minus, Plus, Zap } from 'lucide-react';
 import { CouncilMode } from '../types';
 
 interface InputAreaProps {
@@ -39,20 +39,14 @@ export const InputArea: React.FC<InputAreaProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   const [showAgentPopover, setShowAgentPopover] = useState(false);
-
-  const [tempAgentCount, setTempAgentCount] = useState(agentCount);
-
-  useEffect(() => {
-    if (showAgentPopover) {
-      setTempAgentCount(agentCount);
-    }
-  }, [showAgentPopover, agentCount]);
+  const [showModelPopover, setShowModelPopover] = useState(false);
 
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
     }
   }, [query]);
 
@@ -81,32 +75,22 @@ export const InputArea: React.FC<InputAreaProps> = ({
     }
   };
 
-  const handleSelectAgentCount = (count: string) => {
-    onChangeAgentCount(count);
-    if (count === '1') {
-      onChangeCouncilMode('single');
-    } else if (['2', '3', '4'].includes(count)) {
-      onChangeCouncilMode('multi');
-    } else if (['5', '6', '7', '8', '9', '10'].includes(count)) {
-      onChangeCouncilMode('deep');
-    }
+  const currentCountNum = agentCount === 'Auto' ? (councilMode === 'single' ? 1 : councilMode === 'multi' ? 3 : 8) : parseInt(agentCount);
+
+  const handleIncrementAgents = () => {
+    const next = Math.min(currentCountNum + 1, 10);
+    onChangeAgentCount(next.toString());
+    if (next === 1) onChangeCouncilMode('single');
+    else if (next <= 4) onChangeCouncilMode('multi');
+    else onChangeCouncilMode('deep');
   };
 
-  const getRolesPreview = (countStr: string) => {
-    const num = countStr === 'Auto' ? 3 : parseInt(countStr);
-    const pool = [
-      'Solver (Primary Solution)',
-      'Independent Solver (Parallel Baseline)',
-      'Alternative Solver (Edge Case Approach)',
-      'Critic & Adversarial Verifier',
-      'Fact & Schema Checker',
-      'Code Reviewer & Refiner',
-      'Mathematical Verifier',
-      'Edge Case Specialist',
-      'Refinement Specialist',
-      'Executive Synthesizer'
-    ];
-    return pool.slice(0, Math.min(num, pool.length));
+  const handleDecrementAgents = () => {
+    const prev = Math.max(currentCountNum - 1, 1);
+    onChangeAgentCount(prev.toString());
+    if (prev === 1) onChangeCouncilMode('single');
+    else if (prev <= 4) onChangeCouncilMode('multi');
+    else onChangeCouncilMode('deep');
   };
 
   return (
@@ -144,16 +128,35 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
         <div className="council-context-bar">
           <span className="context-desc">
-            {councilMode === 'single' && '1 agent solves prompt directly for maximum execution speed.'}
-            {councilMode === 'multi' && '2–4 parallel agents cross-verify logic and produce consensus.'}
-            {councilMode === 'deep' && '5–10 specialized role agents execute with full verification queue.'}
+            {councilMode === 'single' && '1 agent · fastest execution'}
+            {councilMode === 'multi' && '2–4 agents · cross-check & consensus'}
+            {councilMode === 'deep' && '5–10 agents · maximum verification'}
           </span>
 
-          <span className="dynamic-state-badge">
-            {agentCount === 'Auto'
-              ? `${councilMode.toUpperCase()} MODE • DYNAMIC ALLOCATION`
-              : `${agentCount} AGENT${agentCount === '1' ? '' : 'S'} • PARALLEL POOL`}
-          </span>
+          {/* COMPACT AGENT INCREMENT / DECREMENT STEPPER */}
+          <div className="compact-stepper-control">
+            <button
+              className="stepper-btn"
+              onClick={handleDecrementAgents}
+              disabled={running || uploading || currentCountNum <= 1}
+              title="Decrease agent count"
+            >
+              <Minus size={10} />
+            </button>
+
+            <span className="stepper-value">
+              {agentCount === 'Auto' ? `AUTO (${currentCountNum})` : `${currentCountNum} AGENTS`}
+            </span>
+
+            <button
+              className="stepper-btn"
+              onClick={handleIncrementAgents}
+              disabled={running || uploading || currentCountNum >= 10}
+              title="Increase agent count"
+            >
+              <Plus size={10} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -165,7 +168,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
           value={query}
           onChange={(e) => onChangeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask AI Orchestra anything... (Press Enter to send, Shift + Enter for newline)"
+          placeholder="Ask AI Orchestra... (Press Enter to send, Shift + Enter for newline)"
           disabled={running || uploading}
           rows={1}
         />
@@ -212,15 +215,57 @@ export const InputArea: React.FC<InputAreaProps> = ({
               />
             </div>
 
-            <button className="command-btn" style={{ pointerEvents: 'none' }}>
-              <Cpu size={12} />
-              <span>Model: {selectedModel ? selectedModel : 'Auto'}</span>
-            </button>
+            {/* COMPACT MODEL SELECTOR DROPDOWN TRIGGER */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className={`command-btn ${showModelPopover ? 'active' : ''}`}
+                onClick={() => setShowModelPopover(!showModelPopover)}
+                disabled={running || uploading}
+              >
+                <Cpu size={12} />
+                <span>MODEL: {selectedModel || 'Auto'}</span>
+                <ChevronDown size={11} />
+              </button>
 
-            {/* AGENTS ▼ COMPACT DROPDOWN TRIGGER */}
+              {/* MODEL POPOVER MENU */}
+              {showModelPopover && (
+                <div className="model-popover-menu" onClick={() => setShowModelPopover(false)}>
+                  <div className="model-popover-header">SELECT PRIMARY MODEL</div>
+                  <div className="model-popover-list">
+                    <button
+                      className={`model-popover-item ${!selectedModel || selectedModel === 'Auto' ? 'selected' : ''}`}
+                      onClick={() => { onSelectModel('Auto'); setShowModelPopover(false); }}
+                    >
+                      <div className="model-item-title">Auto / Dynamic Routing</div>
+                      <div className="model-item-sub">Selects best cloud/local model automatically</div>
+                    </button>
+
+                    {availableModels.map((model) => {
+                      const isFree = model.includes('free') || model.includes('gemini') || model.includes('qwen');
+                      const providerName = model.includes('/') ? 'OpenRouter Cloud' : model.includes('gemini') ? 'Google Gemini Cloud' : 'Local Ollama';
+                      return (
+                        <button
+                          key={model}
+                          className={`model-popover-item ${selectedModel === model ? 'selected' : ''}`}
+                          onClick={() => { onSelectModel(model); setShowModelPopover(false); }}
+                        >
+                          <div className="model-item-top">
+                            <span className="model-item-title">{model}</span>
+                            {isFree && <span className="model-free-badge">FREE TIER</span>}
+                          </div>
+                          <div className="model-item-sub">{providerName} • Fast Latency</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* AGENTS CONFIG POPOVER TRIGGER */}
             <button
               className={`command-btn ${showAgentPopover ? 'active' : ''}`}
-              onClick={() => setShowAgentPopover(true)}
+              onClick={() => setShowAgentPopover(!showAgentPopover)}
               disabled={running || uploading}
             >
               <Users size={12} />
@@ -237,7 +282,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
             {running ? (
               <>
                 <div className="spinner" />
-                <span>RUNNING</span>
+                <span>STOP</span>
               </>
             ) : (
               <>
@@ -249,41 +294,24 @@ export const InputArea: React.FC<InputAreaProps> = ({
         </div>
       </div>
 
-      {/* AGENT POPOVER SELECTION MODAL */}
+      {/* AGENT POPOVER MODAL */}
       {showAgentPopover && (
         <div className="agent-popover-overlay" onClick={() => setShowAgentPopover(false)}>
           <div className="agent-popover-card" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sliders size={13} />
-                <span>AGENTS SELECTION</span>
+                <Sliders size={13} style={{ color: 'var(--accent-color)' }} />
+                <span>COUNCIL AGENT POOL CONFIGURATION</span>
               </div>
               <button onClick={() => setShowAgentPopover(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={14} />
               </button>
             </div>
 
-            {/* AUTO MODE */}
-            <div style={{ background: 'var(--bg-base)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>AUTO MODE</span>
-                <button
-                  className={`command-btn ${tempAgentCount === 'Auto' ? 'active glow-active-steady' : ''}`}
-                  onClick={() => setTempAgentCount('Auto')}
-                  style={{ padding: '4px 12px', fontWeight: 700 }}
-                >
-                  {tempAgentCount === 'Auto' ? '● AUTO ACTIVE' : 'SELECT AUTO'}
-                </button>
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                Intelligently determines agent count based on query complexity (Simple → 1, Normal → 2-3, Complex → 4-5, Deep → 5-10).
-              </div>
-            </div>
-
-            {/* MANUAL AGENT COUNT SELECTOR GRID (1 TO 10) */}
+            {/* MANUAL AGENT COUNT GRID */}
             <div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                MANUAL AGENT COUNT (1 – 10)
+              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                PARALLEL AGENTS (1 – 10)
               </div>
               <div className="agent-count-grid">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((num) => {
@@ -294,9 +322,13 @@ export const InputArea: React.FC<InputAreaProps> = ({
                   return (
                     <button
                       key={num}
-                      className={`agent-num-btn ${tempAgentCount === num ? 'active glow-active-steady' : ''}`}
-                      onClick={() => setTempAgentCount(num)}
-                      title={`${num} Agent (${badgeLabel})`}
+                      className={`agent-num-btn ${agentCount === num ? 'active glow-active-steady' : ''}`}
+                      onClick={() => {
+                        onChangeAgentCount(num);
+                        if (num === '1') onChangeCouncilMode('single');
+                        else if (['2', '3', '4'].includes(num)) onChangeCouncilMode('multi');
+                        else onChangeCouncilMode('deep');
+                      }}
                     >
                       <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{num}</span>
                       <span style={{ fontSize: '0.55rem', opacity: 0.75, marginTop: '2px' }}>{badgeLabel}</span>
@@ -306,33 +338,14 @@ export const InputArea: React.FC<InputAreaProps> = ({
               </div>
             </div>
 
-            {/* ROLES PREVIEW */}
-            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                ASSIGNED ROLES ({tempAgentCount === 'Auto' ? 'AUTO (3 AGENTS)' : `${tempAgentCount} AGENTS`})
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto' }}>
-                {getRolesPreview(tempAgentCount).map((role, idx) => (
-                  <div key={idx} style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>AGENT 0{idx + 1}:</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{role}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* APPLY */}
             <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 className="send-btn glow-active-steady"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px' }}
-                onClick={() => {
-                  handleSelectAgentCount(tempAgentCount);
-                  setShowAgentPopover(false);
-                }}
+                onClick={() => setShowAgentPopover(false)}
               >
                 <Check size={14} />
-                <span>APPLY AGENT CONFIGURATION</span>
+                <span>APPLY AGENT COUNT</span>
               </button>
             </div>
           </div>
@@ -341,4 +354,3 @@ export const InputArea: React.FC<InputAreaProps> = ({
     </div>
   );
 };
-

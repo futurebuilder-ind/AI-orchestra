@@ -6,7 +6,7 @@ export type CouncilMode = 'single' | 'multi' | 'deep' | 'auto';
 
 export type PresetColor = 'white' | 'blue' | 'purple' | 'cyan' | 'green' | 'orange' | 'red';
 export type MovementMode = 'subtle' | 'smooth' | 'dynamic' | 'cinematic' | 'extreme';
-export type GlowStyle = 'static' | 'breathing' | 'pulse' | 'flow' | 'orbit';
+export type GlowStyle = 'none' | 'static' | 'breathing' | 'pulse' | 'flow' | 'scan' | 'orbit' | 'aurora';
 export type ConnectionStyle = 'none' | 'flow' | 'pulse' | 'particle_flow';
 export type BackgroundMotion = 'off' | 'subtle' | 'medium' | 'dynamic';
 export type ToastPosition = 'bottom-right' | 'top-right' | 'bottom-left';
