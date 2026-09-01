@@ -1738,6 +1738,18 @@ html, body {
     display: none !important;
   }
 
+  .model-popover-menu,
+  .mode-popover-menu {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    bottom: 85px !important;
+    top: auto !important;
+    z-index: 300 !important;
+  }
+
   .desktop-only-inline {
     display: none !important;
   }
