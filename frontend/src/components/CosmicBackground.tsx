@@ -32,7 +32,7 @@ const sampleTextTargets = (text: string, count: number, canvasWidth: number, can
   if (!ctx) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = '700 56px "Syne", "Outfit", "Inter", sans-serif';
+  ctx.font = '600 54px "Geist", "Inter", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, w / 2, h / 2);

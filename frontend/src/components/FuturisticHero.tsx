@@ -51,35 +51,33 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
 
       {/* --- CENTRAL HERO CONTENT BLOCK --- */}
       <div className="hero-center-content">
-        {/* Massive Split Metallic Title */}
-        <h1 className="hero-headline-astra">
-          <span className="astra-title-part title-left">AI</span>
-          <span className="astra-title-spacer" />
-          <span className="astra-title-part title-right">ORCHESTRA</span>
+        {/* Clean, Elegant Research Headline — Geist/Inter, Uncropped */}
+        <h1 className="hero-headline-research">
+          AI ORCHESTRA
         </h1>
 
         {/* Wide Letter-Spaced Sub-Heading */}
-        <div className="hero-subheadline-astra">
+        <div className="hero-subheadline-research">
           ORCHESTRATE &nbsp; INTELLIGENCE &nbsp; BEYOND &nbsp; LIMITS
         </div>
 
         {/* Subtitle Paragraph */}
-        <p className="hero-description-astra">
+        <p className="hero-description-research">
           A unified intelligence layer to reason, compare, and create with the world's most advanced AI models.
         </p>
 
         {/* Action CTAs Row */}
-        <div className="hero-cta-astra-row">
+        <div className="hero-cta-research-row">
           <button
-            className="cta-btn-astra-primary"
+            className="cta-btn-research-primary"
             onClick={() => onLaunchConsole ? onLaunchConsole() : null}
           >
             <span>Enter AI Orchestra</span>
-            <ArrowUpRight size={16} />
+            <ArrowUpRight size={15} />
           </button>
-          <a href="#features" className="cta-btn-astra-secondary">
+          <a href="#features" className="cta-btn-research-secondary">
             <span>Explore Architecture</span>
-            <Compass size={15} style={{ marginLeft: '6px' }} />
+            <Compass size={14} style={{ marginLeft: '4px' }} />
           </a>
         </div>
       </div>
@@ -92,8 +90,8 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
         <span className="scroll-text">SCROLL TO EXPLORE</span>
       </div>
 
-      {/* --- PRESERVED & ENHANCED CINEMATIC ORCHESTRA NETWORK --- */}
-      <div className="hero-network-wrapper">
+      {/* --- PRESERVED CINEMATIC ORCHESTRA NETWORK (FLOATING) --- */}
+      <div className="hero-network-floating-wrapper">
         <div className="network-header-badge">
           <span className="badge-dot" />
           <span>LIVE ARCHITECTURE ENGINE</span>
@@ -101,22 +99,22 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
         <CinematicOrchestraNetwork modelNames={availableModels} />
       </div>
 
-      {/* --- PROMPT SUGGESTIONS GRID --- */}
-      <div className="hero-suggestions-grid">
+      {/* --- MINIMAL EDITORIAL PROMPT SUGGESTIONS --- */}
+      <div className="hero-suggestions-research-list">
         {suggestions.map((item, idx) => {
           const Icon = item.icon;
           return (
             <button
               key={idx}
-              className="hero-suggestion-card"
+              className="hero-suggestion-research-item"
               onClick={() => onQuickQuery && onQuickQuery(item.query)}
             >
-              <div className="suggestion-icon-wrapper">
-                <Icon size={16} />
+              <div className="suggestion-icon-dot">
+                <Icon size={14} />
               </div>
-              <div className="suggestion-content">
-                <span className="suggestion-title">{item.title}</span>
-                <span className="suggestion-query">"{item.query}"</span>
+              <div className="suggestion-text-block">
+                <span className="suggestion-title-label">{item.title}</span>
+                <span className="suggestion-query-snippet">"{item.query}"</span>
               </div>
             </button>
           );
@@ -125,4 +123,5 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
     </div>
   );
 };
+
 
