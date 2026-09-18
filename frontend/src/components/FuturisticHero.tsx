@@ -23,32 +23,6 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
 
   return (
     <div className={`futuristic-hero-container ${isTyping ? 'hero-compact' : ''}`}>
-      {/* --- FLOATING CORNER TELEMETRY METRICS --- */}
-      <div className="hero-telemetry-corner telemetry-top-left">
-        <span className="telemetry-label">FROM</span>
-        <span className="telemetry-label">PROMPTS</span>
-        <span className="telemetry-label">TO</span>
-        <span className="telemetry-label">POSSIBILITIES</span>
-        <div className="telemetry-line" />
-      </div>
-
-      <div className="hero-telemetry-corner telemetry-top-right">
-        <span className="telemetry-label">MULTI-MODEL</span>
-        <span className="telemetry-label">INTELLIGENCE</span>
-        <span className="telemetry-label">FOR A BRIGHTER TOMORROW</span>
-      </div>
-
-      <div className="hero-telemetry-corner telemetry-bottom-left">
-        <span className="telemetry-label">— INTELLIGENCE</span>
-        <span className="telemetry-label">  IN HARMONY</span>
-      </div>
-
-      <div className="hero-telemetry-corner telemetry-bottom-right">
-        <span className="telemetry-label">— BUILT</span>
-        <span className="telemetry-label">  FOR HUMAN</span>
-        <span className="telemetry-label">  POTENTIAL</span>
-      </div>
-
       {/* --- CENTRAL HERO CONTENT BLOCK --- */}
       <div className="hero-center-content">
         {/* Clean, Elegant Research Headline — Geist/Inter, Uncropped */}
@@ -60,11 +34,6 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
         <div className="hero-subheadline-research">
           ORCHESTRATE &nbsp; INTELLIGENCE &nbsp; BEYOND &nbsp; LIMITS
         </div>
-
-        {/* Subtitle Paragraph */}
-        <p className="hero-description-research">
-          A unified intelligence layer to reason, compare, and create with the world's most advanced AI models.
-        </p>
 
         {/* Action CTAs Row */}
         <div className="hero-cta-research-row">
