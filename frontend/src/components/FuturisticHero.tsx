@@ -51,14 +51,6 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
         </div>
       </div>
 
-      {/* --- BOTTOM ANIMATED CAPSULE SCROLL INDICATOR --- */}
-      <div className="hero-scroll-indicator">
-        <div className="scroll-capsule">
-          <div className="scroll-dot" />
-        </div>
-        <span className="scroll-text">SCROLL TO EXPLORE</span>
-      </div>
-
       {/* --- PRESERVED CINEMATIC ORCHESTRA NETWORK (FLOATING) --- */}
       <div className="hero-network-floating-wrapper">
         <div className="network-header-badge">

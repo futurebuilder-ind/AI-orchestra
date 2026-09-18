@@ -2113,64 +2113,94 @@ html, body {
   border-radius: 50%;
 }
 
-/* --- MINIMAL EDITORIAL PROMPT SUGGESTIONS LIST --- */
+/* --- SOLAR SYSTEM PLANETARY ORBITS IN NETWORK --- */
+.core-orbital-ring-reverse {
+  animation: coreOrbitSpinReverse 28s linear infinite;
+  transform-origin: center;
+}
+@keyframes coreOrbitSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* --- LUXURY GLASS PROMPT SUGGESTIONS LIST --- */
 .hero-suggestions-research-list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   width: 100%;
-  max-width: 860px;
-  margin-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 880px;
+  margin-top: 28px;
+  background: rgba(10, 15, 26, 0.75);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 5;
 }
 
 .hero-suggestion-research-item {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: transparent;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  color: text-primary;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero-suggestion-research-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.12);
 }
 
 .suggestion-icon-dot {
   color: #38bdf8;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .suggestion-text-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .suggestion-title-label {
   font-family: var(--font-sans);
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: #f1f5f9;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .suggestion-query-snippet {
   font-family: var(--font-mono);
   font-size: 0.74rem;
-  color: #64748b;
+  color: #94a3b8;
+  line-height: 1.4;
 }
 
-/* --- EDITORIAL FEATURES SECTION --- */
+/* --- EDITORIAL FEATURES SECTION (CAPABILITIES) --- */
 .features-section {
   width: 100%;
-  padding: 80px 32px;
+  padding: 90px 32px;
   display: flex;
   justify-content: center;
   position: relative;
@@ -2179,52 +2209,72 @@ html, body {
 
 .features-inner {
   width: 100%;
-  max-width: 900px;
+  max-width: 920px;
 }
 
 .features-header {
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+  text-align: center;
 }
 
 .features-eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
   color: #38bdf8;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .features-title {
   font-family: var(--font-sans);
-  font-size: clamp(1.8rem, 3.8vw, 2.8rem);
-  font-weight: 600;
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  font-weight: 700;
   letter-spacing: -0.03em;
   color: #ffffff;
-  margin: 10px 0;
+  margin: 12px 0 10px;
 }
 
 .features-title-accent {
-  color: #94a3b8;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .features-subtitle {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
-  color: #64748b;
-  max-width: 500px;
+  font-size: 0.98rem;
+  color: #94a3b8;
+  max-width: 580px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 .features-editorial-list {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
 }
 
 .feature-editorial-item {
-  padding: 24px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 22px 26px;
+  background: rgba(10, 15, 26, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.feature-editorial-item:hover {
+  background: rgba(10, 15, 26, 0.85);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(56, 189, 248, 0.15);
 }
 
 .feature-editorial-header {
@@ -2237,29 +2287,37 @@ html, body {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: #38bdf8;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-weight: 600;
 }
 
 .feature-item-title {
   font-family: var(--font-sans);
   font-size: 1.15rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .feature-item-icon {
-  color: #94a3b8;
+  color: #38bdf8;
 }
 
 .feature-item-desc {
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: #94a3b8;
   line-height: 1.6;
-  max-width: 680px;
+  max-width: 780px;
+  margin: 0;
 }
 
 /* MINIMAL PIPELINE */
@@ -2268,8 +2326,11 @@ html, body {
   align-items: center;
   justify-content: space-between;
   margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 24px;
+  background: rgba(10, 15, 26, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
 }
 
 .pipeline-step-min {

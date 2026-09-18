@@ -253,7 +253,56 @@ export const CinematicOrchestraNetwork: React.FC<CinematicOrchestraNetworkProps>
         height="100%"
         style={{ overflow: 'visible' }}
       >
+        {/* Planetary Solar System Orbit Rings */}
+        <g id="solar-orbits" opacity="0.45">
+          <ellipse
+            cx={cx}
+            cy={cy}
+            rx={width * 0.22}
+            ry={height * 0.3}
+            fill="none"
+            stroke="url(#cyanOrbitGrad)"
+            strokeWidth="1.2"
+            strokeDasharray="6 8"
+            className="core-orbital-ring"
+          />
+          <ellipse
+            cx={cx}
+            cy={cy}
+            rx={width * 0.32}
+            ry={height * 0.38}
+            fill="none"
+            stroke="url(#amberOrbitGrad)"
+            strokeWidth="1.2"
+            strokeDasharray="8 10"
+            className="core-orbital-ring-reverse"
+          />
+          <ellipse
+            cx={cx}
+            cy={cy}
+            rx={width * 0.38}
+            ry={height * 0.44}
+            fill="none"
+            stroke="url(#purpleOrbitGrad)"
+            strokeWidth="1"
+            strokeDasharray="4 6"
+            className="core-orbital-ring"
+          />
+        </g>
+
         <defs>
+          <linearGradient id="cyanOrbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+          </linearGradient>
+          <linearGradient id="amberOrbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.1" />
+          </linearGradient>
+          <linearGradient id="purpleOrbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.1" />
+          </linearGradient>
           <filter id="pulseBlur">
             <feGaussianBlur stdDeviation="4" />
           </filter>
