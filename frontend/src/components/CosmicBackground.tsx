@@ -239,29 +239,6 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       // Curve Scale Radius
       const lemniscateScale = Math.min(width * 0.42, 640);
 
-      // --- RENDER WIREFRAME INFINITY GUIDE RINGS ---
-      ctx.save();
-      ctx.lineWidth = 1;
-
-      // Left Icy Cyan Elliptical Guide Loop
-      ctx.beginPath();
-      ctx.ellipse(centerX - lemniscateScale * 0.45, centerY, lemniscateScale * 0.42, lemniscateScale * 0.22, -0.1, 0, Math.PI * 2);
-      const cyanRingGlow = ctx.createLinearGradient(centerX - lemniscateScale, centerY, centerX, centerY);
-      cyanRingGlow.addColorStop(0, 'rgba(6, 182, 212, 0.12)');
-      cyanRingGlow.addColorStop(1, 'rgba(59, 130, 246, 0.03)');
-      ctx.strokeStyle = cyanRingGlow;
-      ctx.stroke();
-
-      // Right Golden Amber Elliptical Guide Loop
-      ctx.beginPath();
-      ctx.ellipse(centerX + lemniscateScale * 0.45, centerY, lemniscateScale * 0.42, lemniscateScale * 0.22, 0.1, 0, Math.PI * 2);
-      const amberRingGlow = ctx.createLinearGradient(centerX, centerY, centerX + lemniscateScale, centerY);
-      amberRingGlow.addColorStop(0, 'rgba(245, 158, 11, 0.03)');
-      amberRingGlow.addColorStop(1, 'rgba(251, 191, 36, 0.12)');
-      ctx.strokeStyle = amberRingGlow;
-      ctx.stroke();
-      ctx.restore();
-
       // --- RENDER CENTRAL STARBURST FLARE & AMBIENT GLOW ---
       const starGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.min(width, height) * 0.55);
       starGlow.addColorStop(0, 'rgba(255, 245, 230, 0.12)');

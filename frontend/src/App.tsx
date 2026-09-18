@@ -779,41 +779,6 @@ export default function App() {
                   <div className="empty-workspace-view">
                     {/* CORE ORBITAL STARBURST VISUALIZER & TELEMETRY */}
                     <CommandCenterCoreVisualizer />
-
-                    {/* 4 GLASS ACTION CARDS */}
-                    <div className="command-action-cards-grid">
-                      <div className="command-action-card" onClick={() => handleRun("Synthesize responses using multi-agent reasoning across top models.")}>
-                        <div className="action-card-header">
-                          <Cpu size={16} className="card-icon cyan" />
-                          <span className="card-title">Multi-Agent Reasoning</span>
-                        </div>
-                        <p className="card-desc">Synthesize responses across multiple specialized models in parallel.</p>
-                      </div>
-
-                      <div className="command-action-card" onClick={() => handleRun("Compare model outputs for: benchmark code execution and reasoning.")}>
-                        <div className="action-card-header">
-                          <Zap size={16} className="card-icon amber" />
-                          <span className="card-title">Compare Models</span>
-                        </div>
-                        <p className="card-desc">Benchmark output across Gemini, Qwen, DeepSeek & Llama models.</p>
-                      </div>
-
-                      <div className="command-action-card" onClick={() => handleRun("Analyze a document for key insights and summary.")}>
-                        <div className="action-card-header">
-                          <FileText size={16} className="card-icon purple" />
-                          <span className="card-title">Analyze a Document</span>
-                        </div>
-                        <p className="card-desc">Upload code, PDFs, or specs for automated context analysis.</p>
-                      </div>
-
-                      <div className="command-action-card" onClick={() => handleRun("Build a production-grade full-stack architecture for AI application.")}>
-                        <div className="action-card-header">
-                          <Box size={16} className="card-icon blue" />
-                          <span className="card-title">Build with AI</span>
-                        </div>
-                        <p className="card-desc">Generate production code, architectures & structured JSON outputs.</p>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

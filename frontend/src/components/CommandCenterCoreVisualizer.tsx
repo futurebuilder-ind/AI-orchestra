@@ -211,29 +211,6 @@ export const CommandCenterCoreVisualizer: React.FC = () => {
 
   return (
     <div className="command-core-visualizer-container">
-      {/* 4 Corner Telemetry Overlays */}
-      <div className="telemetry-corner-item top-left-telemetry">
-        <span className="telemetry-head">ORCHESTRATE</span>
-        <span className="telemetry-sub">REASON // SYNTHESIZE // CONSENSUS</span>
-        <div className="telemetry-bar" />
-      </div>
-
-      <div className="telemetry-corner-item top-right-telemetry">
-        <span className="telemetry-head">MULTI-MODEL INTELLIGENCE</span>
-        <span className="telemetry-sub">FOR A BRIGHTER TOMORROW</span>
-      </div>
-
-      <div className="telemetry-corner-item mid-left-telemetry">
-        <span className="telemetry-head">IDEAS // MODELS</span>
-        <span className="telemetry-sub">DATA // PEOPLE</span>
-        <div className="telemetry-bar" />
-      </div>
-
-      <div className="telemetry-corner-item bottom-right-telemetry">
-        <span className="telemetry-head">BUILT FOR HUMAN POTENTIAL</span>
-        <span className="telemetry-sub">LATENCY: 24MS // STATUS: ONLINE</span>
-      </div>
-
       {/* Background Canvas */}
       <canvas ref={canvasRef} className="command-core-canvas" />
 
