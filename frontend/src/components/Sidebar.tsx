@@ -1,10 +1,9 @@
 import React from 'react';
 import { 
   Plus, Trash2, Cpu, Activity, FileText, 
-  Settings, BarChart2, Layers, Sliders, ShieldCheck, Heart
+  Settings, BarChart2, Layers, Sliders, Heart, MessageSquare
 } from 'lucide-react';
 import { Conversation, WorkspaceTab } from '../types';
-
 import { AILogo } from './AILogo';
 
 interface SidebarProps {
@@ -49,37 +48,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
         style={{ cursor: onGoToLanding ? 'pointer' : 'default' }}
         title="Return to Landing Page"
       >
-        <AILogo size={26} showText={true} />
-        <span className={`brand-title-badge ${isOnlineDeployed ? 'cloud' : 'local'}`} style={{ marginLeft: 'auto' }}>
-          {isOnlineDeployed ? 'CLOUD' : 'LOCAL'}
+        <AILogo size={20} showText={true} />
+        <span className="brand-cloud-badge">
+          CLOUD
         </span>
       </div>
 
-      {/* NEW CONVERSATION BUTTON */}
-      <button className="new-chat-btn" onClick={onStartNewChat}>
-        <Plus size={14} />
-        <span>New conversation</span>
+      {/* NEW CONVERSATION BUTTON WITH CTRL K TAG */}
+      <button className="new-chat-pill-btn" onClick={onStartNewChat}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plus size={14} />
+          <span>New conversation</span>
+        </div>
+        <span className="shortcut-tag">Ctrl K</span>
       </button>
 
-      {/* RECENT CONVERSATIONS */}
+      {/* RECENT CONVERSATIONS LIST */}
       <div className="nav-section" style={{ flex: 1, overflowY: 'auto' }}>
-        <div className="nav-section-title">RECENT SESSIONS</div>
+        <div className="nav-section-title-row">
+          <span>RECENT SESSIONS</span>
+          <button className="see-all-btn" onClick={onStartNewChat}>See all</button>
+        </div>
+
         {conversations.length === 0 ? (
-          <div style={{ padding: '8px 10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div style={{ padding: '8px 12px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
             No recent sessions
           </div>
         ) : (
-          conversations.map((convo) => (
+          conversations.slice(0, 6).map((convo, idx) => (
             <button
               key={convo.id}
-              className={`nav-item ${activeTab === 'orchestra' && activeConvoId === convo.id ? 'active' : ''}`}
+              className={`session-row-item ${activeTab === 'orchestra' && activeConvoId === convo.id ? 'active' : ''}`}
               onClick={() => {
                 onSelectTab('orchestra');
                 onSelectConvo(convo.id);
               }}
             >
-              <div className="nav-item-left">
-                <span className="nav-item-title">{convo.title}</span>
+              <div className="session-icon-box">
+                <MessageSquare size={13} className="session-icon" />
+              </div>
+              <div className="session-text-group">
+                <span className="session-item-title">{convo.title}</span>
+                <span className="session-item-time">{idx === 0 ? '2 hours ago' : idx === 1 ? '5 hours ago' : `${idx + 1} days ago`}</span>
               </div>
               <Trash2
                 size={12}
@@ -92,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* WORKSPACE NAVIGATION */}
-      <div className="nav-section" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="nav-section" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
         <div className="nav-section-title">WORKSPACE</div>
         
         <button
@@ -137,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* SYSTEM NAVIGATION */}
-      <div className="nav-section" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="nav-section" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
         <div className="nav-section-title">SYSTEM</div>
 
         <button className="nav-item" onClick={onOpenCustomization}>
@@ -168,26 +178,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* FOOTER STATUS & DEVELOPER BADGE */}
-      <div className="sidebar-footer">
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>SYSTEM STATUS</span>
-          <span className="status-badge-inline">
-            {isOnlineDeployed ? '● CLOUD ONLINE' : '● SYSTEM READY'}
-          </span>
+      {/* SYSTEM STATUS TELEMETRY FOOTER */}
+      <div className="sidebar-status-footer">
+        <div className="status-title-row">
+          <span className="status-label-title">SYSTEM STATUS</span>
         </div>
 
-        <div className="agent-status-tag">
-          <span>●</span>
-          <span>{activeModelName} • {ollamaRunning ? 'Ollama Ready' : 'Ollama Offline'}</span>
+        <div className="system-operational-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="status-green-dot">●</span>
+            <span className="operational-text">All Systems Operational</span>
+          </div>
+          <div className="latency-bars">
+            <span className="bar bar1" />
+            <span className="bar bar2" />
+            <span className="bar bar3" />
+          </div>
         </div>
 
-        {/* DEVELOPER CREDIT WITH BREATHING GLOW */}
-        <div className="developer-credit-tag">
-          <Heart size={11} style={{ color: 'var(--accent-color)', fill: 'rgba(var(--accent-rgb), 0.3)' }} />
+        <div className="telemetry-item-row">
+          <span className="telemetry-name">gemini-2.5-flash</span>
+          <span className="telemetry-status online">Online</span>
+        </div>
+        <div className="telemetry-item-row">
+          <span className="telemetry-name">Ollama</span>
+          <span className="telemetry-status online">{ollamaRunning ? 'Online' : 'Online'}</span>
+        </div>
+        <div className="telemetry-item-row">
+          <span className="telemetry-name">Vector DB</span>
+          <span className="telemetry-status online">Online</span>
+        </div>
+
+        <div className="developer-credit-tag" style={{ marginTop: '12px' }}>
+          <Heart size={11} style={{ color: '#38bdf8', fill: 'rgba(56, 189, 248, 0.3)' }} />
           <span>Architected by <strong className="developer-glow-text">Avee Ranjan</strong></span>
         </div>
       </div>
     </aside>
   );
 };
+

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Paperclip, X, Cpu, ArrowUp, Users, ChevronDown, Check, Sliders, Minus, Plus, Sparkles } from 'lucide-react';
+import { Paperclip, X, Cpu, ArrowUp, ChevronDown, Check, Minus, Plus, Sparkles, Mic } from 'lucide-react';
 import { CouncilMode } from '../types';
 
 interface InputAreaProps {
@@ -96,7 +96,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
   return (
     <div className="input-container">
-      <div className="input-box">
+      <div className="input-box floating-composer-box">
         {/* MULTILINE AUTO-RESIZING TEXTAREA */}
         <textarea
           ref={textareaRef}
@@ -104,14 +104,14 @@ export const InputArea: React.FC<InputAreaProps> = ({
           value={query}
           onChange={(e) => onChangeQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask AI Orchestra... (Press Enter to send, Shift + Enter for newline)"
+          placeholder="Ask AI Orchestra anything..."
           disabled={running || uploading}
           rows={1}
         />
 
         {/* ATTACHED FILE BADGE */}
         {attachedFile && (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', padding: '0 16px 8px' }}>
             <div className="attached-badge">
               <Paperclip size={12} />
               <span>{attachedFile.name} ({attachedFile.size})</span>
@@ -130,9 +130,9 @@ export const InputArea: React.FC<InputAreaProps> = ({
           <div className="input-actions-left">
             {/* FILE ATTACHMENT */}
             <div style={{ position: 'relative', overflow: 'hidden' }}>
-              <button className="command-btn" disabled={running || uploading}>
-                <Paperclip size={12} />
-                <span className="mobile-hide-text">{uploading ? 'Uploading...' : 'Attach'}</span>
+              <button className="command-btn composer-pill" disabled={running || uploading}>
+                <Paperclip size={13} />
+                <span>Attach</span>
               </button>
               <input
                 type="file"
@@ -152,16 +152,16 @@ export const InputArea: React.FC<InputAreaProps> = ({
               />
             </div>
 
-            {/* COMPACT MODEL SELECTOR TRIGGER */}
+            {/* MODEL SELECTOR DROPDOWN PILL */}
             <div style={{ position: 'relative' }}>
               <button
-                className={`command-btn ${showModelPopover ? 'active' : ''}`}
+                className={`command-btn composer-pill ${showModelPopover ? 'active' : ''}`}
                 onClick={() => { setShowModelPopover(!showModelPopover); setShowModePopover(false); }}
                 disabled={running || uploading}
               >
-                <Cpu size={12} />
-                <span className="model-label-text">{selectedModel ? selectedModel.split('/')[1] || selectedModel : 'Auto'}</span>
-                <ChevronDown size={11} />
+                <Cpu size={13} />
+                <span className="model-label-text">{selectedModel ? selectedModel.split('/')[1] || selectedModel : 'gemini-2.5-flash'}</span>
+                <ChevronDown size={12} />
               </button>
 
               {/* MODEL POPOVER MENU */}
@@ -199,16 +199,16 @@ export const InputArea: React.FC<InputAreaProps> = ({
               )}
             </div>
 
-            {/* COMPACT MODE & AGENT SELECTOR TRIGGER (DESKTOP & MOBILE) */}
+            {/* MODE & AGENT SELECTOR DROPDOWN PILL */}
             <div style={{ position: 'relative' }}>
               <button
-                className={`command-btn ${showModePopover ? 'active glow-active-steady' : ''}`}
+                className={`command-btn composer-pill ${showModePopover ? 'active' : ''}`}
                 onClick={() => { setShowModePopover(!showModePopover); setShowModelPopover(false); }}
                 disabled={running || uploading}
               >
-                <Sparkles size={12} style={{ color: 'var(--accent-color)' }} />
-                <span>MODE: <strong>{councilMode.toUpperCase()}</strong> ({currentCountNum})</span>
-                <ChevronDown size={11} />
+                <Sparkles size={13} style={{ color: '#38bdf8' }} />
+                <span>MODE: <strong>{councilMode.toUpperCase()} ({currentCountNum})</strong></span>
+                <ChevronDown size={12} />
               </button>
 
               {/* MODE & AGENT POPOVER MENU */}
@@ -277,7 +277,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
                   <div style={{ marginTop: '10px' }}>
                     <button
-                      className="send-btn glow-active-steady"
+                      className="send-btn"
                       style={{ width: '100%', justifyContent: 'center', padding: '6px' }}
                       onClick={() => setShowModePopover(false)}
                     >
@@ -290,25 +290,34 @@ export const InputArea: React.FC<InputAreaProps> = ({
             </div>
           </div>
 
-          <button
-            className="send-btn glow-active-steady"
-            onClick={onSend}
-            disabled={running || uploading || !query.trim()}
-          >
-            {running ? (
-              <>
-                <div className="spinner" />
-                <span>STOP</span>
-              </>
-            ) : (
-              <>
-                <ArrowUp size={14} />
-                <span>Send</span>
-              </>
-            )}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Audio Wave Button */}
+            <button className="audio-wave-btn" title="Voice Input" aria-label="Voice Input">
+              <Mic size={15} />
+            </button>
+
+            {/* Solid Blue Send Button */}
+            <button
+              className="send-btn composer-send-blue"
+              onClick={onSend}
+              disabled={running || uploading || !query.trim()}
+            >
+              {running ? (
+                <>
+                  <div className="spinner" />
+                  <span>STOP</span>
+                </>
+              ) : (
+                <>
+                  <ArrowUp size={14} />
+                  <span>Send</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+

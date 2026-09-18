@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Sliders, ChevronDown, ChevronUp, Copy, RotateCcw, Download, Maximize2, X, Check } from 'lucide-react';
+import { Menu, Sliders, ChevronDown, ChevronUp, Copy, RotateCcw, Download, Maximize2, X, Check, Search, ArrowRight, Box, Cpu, Zap, FileText } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { InputArea } from './components/InputArea';
 import { OrchestrationVisualizer } from './components/OrchestrationVisualizer';
@@ -12,6 +12,7 @@ import { FuturisticHero } from './components/FuturisticHero';
 import { CosmicBackground } from './components/CosmicBackground';
 import { FeaturesSection } from './components/FeaturesSection';
 import { AILogo } from './components/AILogo';
+import { CommandCenterCoreVisualizer } from './components/CommandCenterCoreVisualizer';
 import { 
   Conversation, Message, StepLog, HardwareInfo, WorkspaceTab, 
   RunItem, PanelConfig, EffectsConfig, WorkspaceDensity, AgentToast, CouncilMode 
@@ -693,14 +694,27 @@ export default function App() {
                 </span>
               </div>
 
+              {/* SEARCH BAR IN HEADER */}
+              <div className="header-search-container">
+                <Search size={13} style={{ color: '#475569' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search sessions...  Ctrl F" 
+                  className="header-search-input"
+                />
+              </div>
+
               <div className="header-actions">
                 <button className="action-btn" onClick={() => setWorkspaceMode(false)}>
-                  <span>Landing Page</span>
+                  <span>Landing Page ↗</span>
                 </button>
                 <button className="action-btn" onClick={() => setIsCustomizationOpen(true)} aria-label="Customize Layout">
-                  <Sliders size={13} style={{ color: 'var(--accent-color)' }} />
+                  <Sliders size={13} style={{ color: '#38bdf8' }} />
                   <span>Customize Layout</span>
                 </button>
+                <div className="header-avatar-circle" title="User Profile">
+                  V
+                </div>
               </div>
             </header>
 
@@ -761,6 +775,47 @@ export default function App() {
 
             {activeTab === 'orchestra' && (
               <div className="workspace-body">
+                {messages.length === 0 && !running ? (
+                  <div className="empty-workspace-view">
+                    {/* CORE ORBITAL STARBURST VISUALIZER & TELEMETRY */}
+                    <CommandCenterCoreVisualizer />
+
+                    {/* 4 GLASS ACTION CARDS */}
+                    <div className="command-action-cards-grid">
+                      <div className="command-action-card" onClick={() => handleRun("Synthesize responses using multi-agent reasoning across top models.")}>
+                        <div className="action-card-header">
+                          <Cpu size={16} className="card-icon cyan" />
+                          <span className="card-title">Multi-Agent Reasoning</span>
+                        </div>
+                        <p className="card-desc">Synthesize responses across multiple specialized models in parallel.</p>
+                      </div>
+
+                      <div className="command-action-card" onClick={() => handleRun("Compare model outputs for: benchmark code execution and reasoning.")}>
+                        <div className="action-card-header">
+                          <Zap size={16} className="card-icon amber" />
+                          <span className="card-title">Compare Models</span>
+                        </div>
+                        <p className="card-desc">Benchmark output across Gemini, Qwen, DeepSeek & Llama models.</p>
+                      </div>
+
+                      <div className="command-action-card" onClick={() => handleRun("Analyze a document for key insights and summary.")}>
+                        <div className="action-card-header">
+                          <FileText size={16} className="card-icon purple" />
+                          <span className="card-title">Analyze a Document</span>
+                        </div>
+                        <p className="card-desc">Upload code, PDFs, or specs for automated context analysis.</p>
+                      </div>
+
+                      <div className="command-action-card" onClick={() => handleRun("Build a production-grade full-stack architecture for AI application.")}>
+                        <div className="action-card-header">
+                          <Box size={16} className="card-icon blue" />
+                          <span className="card-title">Build with AI</span>
+                        </div>
+                        <p className="card-desc">Generate production code, architectures & structured JSON outputs.</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* MESSAGES LIST */}
                   {messages.map((msg, msgIndex) => (
@@ -934,6 +989,7 @@ export default function App() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* COMMAND INTERFACE INPUT AREA */}
                 <InputArea
