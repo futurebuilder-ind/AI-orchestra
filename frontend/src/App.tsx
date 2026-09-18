@@ -10,6 +10,7 @@ import { AgentToastContainer } from './components/AgentToastContainer';
 import { CustomizationDrawer } from './components/CustomizationDrawer';
 import { FuturisticHero } from './components/FuturisticHero';
 import { CosmicBackground } from './components/CosmicBackground';
+import { FeaturesSection } from './components/FeaturesSection';
 import { 
   Conversation, Message, StepLog, HardwareInfo, WorkspaceTab, 
   RunItem, PanelConfig, EffectsConfig, WorkspaceDensity, AgentToast, CouncilMode 
@@ -75,9 +76,9 @@ export default function App() {
       enableAnimations: true,
       enableToasts: true,
       reduceMotion: false,
-      presetColorName: 'cyan',
-      colorPreset: 'cyan',
-      accentColor: '#00f0ff',
+      presetColorName: 'purple',
+      colorPreset: 'purple',
+      accentColor: '#a855f7',
       glowIntensity: 70,
       glowRadius: 12,
       animationSpeed: 1.0,
@@ -504,8 +505,8 @@ export default function App() {
             enableAnimations: true,
             enableToasts: true,
             reduceMotion: false,
-            presetColorName: 'white',
-            accentColor: '#ffffff',
+            presetColorName: 'purple',
+            accentColor: '#a855f7',
             glowIntensity: 70,
             glowRadius: 12,
             animationSpeed: 1.0,
@@ -692,7 +693,24 @@ export default function App() {
           <div className="workspace-body">
             {/* DYNAMIC FUTURISTIC HERO */}
             {messages.length === 0 && runStepLogs.length === 0 ? (
-              <FuturisticHero isTyping={query.length > 0} onQuickQuery={(q) => handleRun(q)} />
+              <>
+                <FuturisticHero
+                  isTyping={query.length > 0}
+                  onQuickQuery={(q) => handleRun(q)}
+                  availableModels={[...ollamaModels, ...geminiModels, ...openrouterModels]}
+                />
+                <FeaturesSection />
+                <footer className="site-footer">
+                  <div className="site-footer-inner">
+                    <span className="footer-brand">AI ORCHESTRA</span>
+                    <div className="footer-links">
+                      <a href="#features">Features</a>
+                      <a href="https://github.com/futurebuilder-ind/AI-orchestra" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </div>
+                    <span className="footer-copy">© {new Date().getFullYear()} AI Orchestra. Built for powerful AI workflows.</span>
+                  </div>
+                </footer>
+              </>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* MESSAGES LIST */}
