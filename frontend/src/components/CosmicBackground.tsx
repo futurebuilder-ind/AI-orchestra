@@ -21,6 +21,55 @@ interface Particle {
   layer: 'bg' | 'mid' | 'fg';
 }
 
+interface Point2D {
+  x: number;
+  y: number;
+}
+
+// Sample point-field target coordinates from rendered canvas text
+const sampleTextTargets = (text: string, count: number, canvasWidth: number, canvasHeight: number): Point2D[] => {
+  const offscreen = document.createElement('canvas');
+  const w = (offscreen.width = 600);
+  const h = (offscreen.height = 160);
+  const ctx = offscreen.getContext('2d');
+  if (!ctx) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 58px "Geist", "Inter", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h / 2);
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const points: Point2D[] = [];
+  const step = Math.max(1, Math.floor(Math.sqrt((w * h) / (count * 12))));
+
+  for (let y = 0; y < h; y += step) {
+    for (let x = 0; x < w; x += step) {
+      const idx = (y * w + x) * 4;
+      if (imgData.data[idx + 3] > 128) {
+        // Map relative to screen center
+        const screenX = (x - w / 2) * (Math.min(canvasWidth, 1400) / 750);
+        const screenY = (y - h / 2) * (Math.min(canvasWidth, 1400) / 750);
+        points.push({ x: screenX, y: screenY });
+      }
+    }
+  }
+
+  if (points.length === 0) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
+
+  // Populate target array matching particle count
+  const targets: Point2D[] = [];
+  for (let i = 0; i < count; i++) {
+    const pt = points[i % points.length];
+    const jitterX = (Math.random() - 0.5) * 4;
+    const jitterY = (Math.random() - 0.5) * 4;
+    targets.push({ x: pt.x + jitterX, y: pt.y + jitterY });
+  }
+
+  return targets;
+};
+
 export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -43,10 +92,15 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     let mouseX = width / 2;
     let mouseY = height / 2;
 
+    // Scroll progress scrubbing state
+    let targetScrollRatio = 0;
+    let currentScrollRatio = 0;
+
     const handleResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      updateTextTargets();
     };
     window.addEventListener('resize', handleResize);
 
@@ -58,7 +112,19 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       window.addEventListener('mousemove', handleMouseMove);
     }
 
-    // Curated high-end color palette: cyan, violet, indigo, warm white, amber, electric teal
+    const handleScroll = () => {
+      const docHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      );
+      const winHeight = window.innerHeight;
+      const maxScroll = Math.max(1, docHeight - winHeight);
+      targetScrollRatio = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    // High-end color palette: cyan, violet, indigo, warm white, amber
     const colorPalette: [number, number, number][] = [
       [255, 255, 255],    // pure white highlight
       [255, 248, 230],    // warm white
@@ -72,9 +138,23 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     ];
 
     // Dynamic particle density
-    const totalCount = isMobile ? 150 : 380;
+    const totalCount = isMobile ? 140 : 380;
     const focalLength = 650;
     const galaxyRadius = Math.min(width, height) * 0.55;
+
+    // Word target mappings
+    let targetWords: Record<string, Point2D[]> = {};
+
+    const updateTextTargets = () => {
+      targetWords = {
+        OPENING: sampleTextTargets('AI ORCHESTRA', totalCount, width, height),
+        ORCHESTRATE: sampleTextTargets('ORCHESTRATE', totalCount, width, height),
+        REASON: sampleTextTargets('REASON', totalCount, width, height),
+        SYNTHESIZE: sampleTextTargets('SYNTHESIZE', totalCount, width, height),
+        CONSENSUS: sampleTextTargets('CONSENSUS', totalCount, width, height),
+      };
+    };
+    updateTextTargets();
 
     const particles: Particle[] = Array.from({ length: totalCount }, (_, i) => {
       const armAngle = Math.random() * Math.PI * 2;
@@ -89,8 +169,6 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
       const layerRand = Math.random();
       const layer: 'bg' | 'mid' | 'fg' = layerRand < 0.3 ? 'bg' : layerRand < 0.8 ? 'mid' : 'fg';
-
-      const isBright = layer === 'fg' || Math.random() < 0.12;
 
       return {
         x,
@@ -110,14 +188,59 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     });
 
     let time = 0;
+    const startTime = performance.now();
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
       time += 0.016;
+      const elapsedSeconds = (performance.now() - startTime) / 1000;
 
-      // Smooth lerp mouse tracking
+      // Lerped mouse tracking
       mouseX += (targetMouseX - mouseX) * 0.04;
       mouseY += (targetMouseY - mouseY) * 0.04;
+
+      // Lerped scroll ratio scrubbing (bidirectional)
+      currentScrollRatio += (targetScrollRatio - currentScrollRatio) * 0.08;
+
+      // Initial page-load formation calculation (0s to 5s)
+      let initialFormationWeight = 0;
+      if (!reduceMotion && elapsedSeconds > 0.4 && elapsedSeconds < 4.8) {
+        if (elapsedSeconds < 1.8) {
+          // Ramp up: disperse -> text
+          initialFormationWeight = (elapsedSeconds - 0.4) / 1.4;
+        } else if (elapsedSeconds < 3.2) {
+          // Hold formation
+          initialFormationWeight = 1.0;
+        } else {
+          // Dissolve: text -> disperse
+          initialFormationWeight = 1.0 - (elapsedSeconds - 3.2) / 1.6;
+        }
+      }
+      initialFormationWeight = Math.max(0, Math.min(1, initialFormationWeight));
+
+      // Scroll-driven word formation calculation
+      let scrollActiveWord = '';
+      let scrollFormationWeight = 0;
+
+      if (!reduceMotion && initialFormationWeight < 0.01 && currentScrollRatio > 0.15) {
+        // Define scroll ratio triggers for words
+        const stages = [
+          { min: 0.20, max: 0.38, word: 'ORCHESTRATE' },
+          { min: 0.42, max: 0.60, word: 'REASON' },
+          { min: 0.65, max: 0.82, word: 'SYNTHESIZE' },
+          { min: 0.85, max: 1.00, word: 'CONSENSUS' }
+        ];
+
+        for (const stage of stages) {
+          if (currentScrollRatio >= stage.min && currentScrollRatio <= stage.max) {
+            const range = stage.max - stage.min;
+            const progress = (currentScrollRatio - stage.min) / range;
+            scrollActiveWord = stage.word;
+            scrollFormationWeight = Math.sin(progress * Math.PI); // smooth bell curve 0 -> 1 -> 0
+            break;
+          }
+        }
+      }
 
       // Central core radial ambient glow
       const centerX = width / 2;
@@ -141,7 +264,7 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       // Sort particles by Z-depth (back-to-front rendering)
       const sortedParticles = [...particles].sort((a, b) => a.z - b.z);
 
-      sortedParticles.forEach(p => {
+      sortedParticles.forEach((p, idx) => {
         if (!reduceMotion) {
           // Orbital physics
           p.orbitAngle += p.orbitSpeed;
@@ -161,8 +284,28 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
 
         // 3D perspective projection
         const scale = focalLength / (focalLength + p.z);
-        const screenX = centerX + (p.x + parallaxX) * scale;
-        const screenY = centerY + (p.y + parallaxY) * scale;
+        let screenX = centerX + (p.x + parallaxX) * scale;
+        let screenY = centerY + (p.y + parallaxY) * scale;
+
+        // Apply Initial Formation Target Morphing
+        if (initialFormationWeight > 0.01 && targetWords.OPENING) {
+          const target = targetWords.OPENING[idx % targetWords.OPENING.length];
+          const tx = centerX + target.x;
+          const ty = centerY + target.y;
+          const easeW = Math.pow(initialFormationWeight, 1.8);
+          screenX = screenX * (1 - easeW) + tx * easeW;
+          screenY = screenY * (1 - easeW) + ty * easeW;
+        }
+        // Apply Scroll-Driven Word Formation Target Morphing
+        else if (scrollFormationWeight > 0.01 && scrollActiveWord && targetWords[scrollActiveWord]) {
+          const target = targetWords[scrollActiveWord][idx % targetWords[scrollActiveWord].length];
+          const tx = centerX + target.x;
+          const ty = centerY + target.y;
+          const easeW = Math.pow(scrollFormationWeight, 1.8);
+          screenX = screenX * (1 - easeW) + tx * easeW;
+          screenY = screenY * (1 - easeW) + ty * easeW;
+        }
+
         const projectedSize = p.size * scale;
 
         // Depth-aware opacity & soft twinkling
@@ -197,6 +340,7 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
       if (!isMobile) {
         window.removeEventListener('mousemove', handleMouseMove);
       }
