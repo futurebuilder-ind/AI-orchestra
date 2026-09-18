@@ -325,6 +325,17 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
           screenX = screenX * (1 - easeW) + tx * easeW;
           screenY = screenY * (1 - easeW) + ty * easeW;
         }
+        // AI ↔ ORCHESTRA Continuous Traveling Particle Stream Bridge
+        else if (currentScrollRatio < 0.25 && idx % 3 === 0) {
+          const cycle = (time * 0.9 + idx * 0.4) % (Math.PI * 2);
+          const bridgeProgress = Math.cos(cycle); // -1 to 1 across words
+          const bridgeWidth = Math.min(width * 0.34, 300);
+          const bx = centerX + bridgeProgress * bridgeWidth;
+          const by = centerY + Math.sin(cycle * 2) * 16;
+          const blend = Math.max(0, 1.0 - (currentScrollRatio / 0.25));
+          screenX = screenX * (1 - blend) + (bx + parallaxX) * blend;
+          screenY = screenY * (1 - blend) + (by + parallaxY) * blend;
+        }
 
         const projectedSize = p.size * scale;
         const depthFactor = Math.max(0.15, Math.min(1, scale));

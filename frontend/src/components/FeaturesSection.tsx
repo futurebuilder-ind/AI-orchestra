@@ -57,14 +57,16 @@ export const FeaturesSection: React.FC = () => {
             const Icon = feature.icon;
             return (
               <div key={idx} className="feature-editorial-item">
-                <div className="feature-editorial-header">
-                  <div className="feature-item-badge">{feature.badge}</div>
-                  <h3 className="feature-item-title">
-                    <Icon size={18} className="feature-item-icon" />
-                    <span>{feature.title}</span>
-                  </h3>
-                </div>
+                <span className="feature-item-badge">{feature.badge}</span>
+                <h3 className="feature-item-title">
+                  <Icon size={17} className="feature-item-icon" />
+                  <span>{feature.title}</span>
+                </h3>
                 <p className="feature-item-desc">{feature.description}</p>
+                <div className="feature-minimal-indicators">
+                  <span className="indicator-status-dot" />
+                  <span className="indicator-label">SYNCHRONIZED ACTIVE STATE</span>
+                </div>
               </div>
             );
           })}

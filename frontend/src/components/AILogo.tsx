@@ -7,7 +7,7 @@ interface AILogoProps {
 
 export const AILogo: React.FC<AILogoProps> = ({ size = 20, showText = true }) => {
   return (
-    <div className="ai-logo-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+    <div className="ai-logo-container" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
       <div 
         style={{ 
           width: `${size}px`, 
@@ -19,18 +19,18 @@ export const AILogo: React.FC<AILogoProps> = ({ size = 20, showText = true }) =>
           flexShrink: 0
         }}
       >
-        {/* Subtle Ambient Core Glow */}
+        {/* Subtle Ambient Core Illumination */}
         <div 
           style={{
             position: 'absolute',
-            inset: '-2px',
+            inset: '-1px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} 
         />
         
-        {/* Minimal Research Emblem (4-point signal star + orbital dot) */}
+        {/* Minimal Precision Emblem: Precision Star + Orbital Ring */}
         <svg 
           width={size} 
           height={size} 
@@ -39,25 +39,34 @@ export const AILogo: React.FC<AILogoProps> = ({ size = 20, showText = true }) =>
           xmlns="http://www.w3.org/2000/svg"
           style={{ position: 'relative', zIndex: 2 }}
         >
-          {/* Subtle Outer Ring */}
-          <circle cx="12" cy="12" r="9.5" stroke="rgba(255, 255, 255, 0.18)" strokeWidth="1" />
+          {/* Delicate Outer Orbital Ring */}
+          <circle 
+            cx="12" 
+            cy="12" 
+            r="10" 
+            stroke="rgba(255, 255, 255, 0.2)" 
+            strokeWidth="0.8" 
+          />
           
-          {/* Signal Starburst Core */}
+          {/* Orbital Satellite Node */}
+          <circle cx="19.5" cy="8" r="1.5" fill="#38bdf8" />
+
+          {/* 4-Ray Precision Signal Star */}
           <path 
-            d="M12 4.5 L13.2 10.8 L19.5 12 L13.2 13.2 L12 19.5 L10.8 13.2 L4.5 12 L10.8 10.8 Z" 
-            fill="url(#emblemGrad)" 
+            d="M12 3.5 C12 8 12.5 11.5 17 12 C12.5 12.5 12 16 12 20.5 C12 16 11.5 12.5 7 12 C11.5 11.5 12 8 12 3.5 Z" 
+            fill="url(#aiEmblemGrad)" 
           />
 
+          {/* Center Photon Core */}
+          <circle cx="12" cy="12" r="1.2" fill="#ffffff" />
+
           <defs>
-            <linearGradient id="emblemGrad" x1="4.5" y1="4.5" x2="19.5" y2="19.5">
+            <linearGradient id="aiEmblemGrad" x1="7" y1="3.5" x2="17" y2="20.5">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="50%" stopColor="#38bdf8" />
-              <stop offset="100%" stopColor="#818cf8" />
+              <stop offset="50%" stopColor="#f8fafc" />
+              <stop offset="100%" stopColor="#38bdf8" />
             </linearGradient>
           </defs>
-
-          {/* Center Point */}
-          <circle cx="12" cy="12" r="1.5" fill="#ffffff" />
         </svg>
       </div>
 
@@ -68,8 +77,8 @@ export const AILogo: React.FC<AILogoProps> = ({ size = 20, showText = true }) =>
             style={{ 
               fontFamily: 'var(--font-sans, "Geist", "Inter", sans-serif)', 
               fontWeight: 600, 
-              fontSize: '0.88rem', 
-              letterSpacing: '0.14em', 
+              fontSize: '0.85rem', 
+              letterSpacing: '0.12em', 
               color: '#ffffff',
               textTransform: 'uppercase'
             }}
@@ -81,5 +90,6 @@ export const AILogo: React.FC<AILogoProps> = ({ size = 20, showText = true }) =>
     </div>
   );
 };
+
 
 
