@@ -578,16 +578,20 @@ export default function App() {
           {/* FLOATING GLASS NAVBAR */}
           <div className="landing-navbar-wrapper">
             <nav className="landing-navbar">
-              <AILogo size={26} showText={true} />
+              <AILogo size={28} showText={true} />
               <div className="landing-nav-links desktop-only-inline">
-                <a href="#features" className="landing-nav-link">Features</a>
+                <a href="#features" className="landing-nav-link">Product</a>
+                <a href="#features" className="landing-nav-link">Research</a>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setWorkspaceMode(true)}>Architecture</button>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('models'); setWorkspaceMode(true); }}>Models</button>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('files'); setWorkspaceMode(true); }}>Docs</button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button className="landing-launch-btn" onClick={() => setWorkspaceMode(true)}>
-                  Launch Console
+                  Launch Console ↗
+                </button>
+                <button className="landing-menu-btn" onClick={() => setMobileSidebarOpen(true)} title="Menu" aria-label="Menu">
+                  <Menu size={16} />
                 </button>
               </div>
             </nav>
@@ -601,6 +605,7 @@ export default function App() {
               handleRun(q);
             }}
             availableModels={[...ollamaModels, ...geminiModels, ...openrouterModels]}
+            onLaunchConsole={() => setWorkspaceMode(true)}
           />
 
           {/* CAPABILITIES SECTION */}

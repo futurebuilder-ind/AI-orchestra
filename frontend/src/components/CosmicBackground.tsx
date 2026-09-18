@@ -6,18 +6,15 @@ interface CosmicBackgroundProps {
 }
 
 interface Particle {
-  x: number;
-  y: number;
-  z: number;
-  vx: number;
-  vy: number;
-  vz: number;
+  t: number;           // Parametric position along infinity lemniscate curve (0 to 2*PI)
+  speed: number;       // Flow speed along curve
+  offsetX: number;     // Random scatter offset perp X
+  offsetY: number;     // Random scatter offset perp Y
+  z: number;           // Z depth offset
   size: number;
   baseAlpha: number;
   color: [number, number, number];
-  orbitAngle: number;
-  orbitSpeed: number;
-  orbitRadius: number;
+  isCyanLoop: boolean; // Left cyan vs right amber stream
   layer: 'bg' | 'mid' | 'fg';
 }
 
@@ -35,7 +32,7 @@ const sampleTextTargets = (text: string, count: number, canvasWidth: number, can
   if (!ctx) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = '600 58px "Geist", "Inter", sans-serif';
+  ctx.font = '700 56px "Syne", "Outfit", "Inter", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, w / 2, h / 2);
@@ -48,9 +45,8 @@ const sampleTextTargets = (text: string, count: number, canvasWidth: number, can
     for (let x = 0; x < w; x += step) {
       const idx = (y * w + x) * 4;
       if (imgData.data[idx + 3] > 128) {
-        // Map relative to screen center
-        const screenX = (x - w / 2) * (Math.min(canvasWidth, 1400) / 750);
-        const screenY = (y - h / 2) * (Math.min(canvasWidth, 1400) / 750);
+        const screenX = (x - w / 2) * (Math.min(canvasWidth, 1400) / 720);
+        const screenY = (y - h / 2) * (Math.min(canvasWidth, 1400) / 720);
         points.push({ x: screenX, y: screenY });
       }
     }
@@ -58,7 +54,6 @@ const sampleTextTargets = (text: string, count: number, canvasWidth: number, can
 
   if (points.length === 0) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
 
-  // Populate target array matching particle count
   const targets: Point2D[] = [];
   for (let i = 0; i < count; i++) {
     const pt = points[i % points.length];
@@ -113,10 +108,7 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     }
 
     const handleScroll = () => {
-      const docHeight = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight
-      );
+      const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
       const winHeight = window.innerHeight;
       const maxScroll = Math.max(1, docHeight - winHeight);
       targetScrollRatio = Math.min(1, Math.max(0, window.scrollY / maxScroll));
@@ -124,25 +116,31 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    // High-end color palette: cyan, violet, indigo, warm white, amber
-    const colorPalette: [number, number, number][] = [
-      [255, 255, 255],    // pure white highlight
-      [255, 248, 230],    // warm white
-      [200, 220, 255],    // soft blue
-      [139, 92, 246],     // vibrant violet
-      [99, 102, 241],     // indigo
-      [59, 130, 246],     // azure blue
-      [6, 182, 212],      // computational cyan
-      [245, 158, 11],     // warm amber
-      [168, 85, 247],     // purple glow
+    // High-density particle counts
+    const totalCount = isMobile ? 220 : 550;
+    const focalLength = 650;
+
+    // Cyan Stream Color Palette (Left Loop)
+    const cyanPalette: [number, number, number][] = [
+      [255, 255, 255], // pure white spark
+      [207, 250, 254], // soft cyan
+      [6, 182, 212],   // vibrant cyan
+      [59, 130, 246],  // azure blue
+      [99, 102, 241],  // deep indigo
+      [147, 197, 253]  // icy sky blue
     ];
 
-    // Dynamic particle density
-    const totalCount = isMobile ? 140 : 380;
-    const focalLength = 650;
-    const galaxyRadius = Math.min(width, height) * 0.55;
+    // Amber Stream Color Palette (Right Loop)
+    const amberPalette: [number, number, number][] = [
+      [255, 255, 255], // pure white spark
+      [254, 243, 199], // soft gold
+      [245, 158, 11],  // warm amber
+      [251, 191, 36],  // bright gold
+      [217, 119, 6],   // deep bronze
+      [249, 115, 22]   // warm orange
+    ];
 
-    // Word target mappings
+    // Word target mappings for scroll morphing
     let targetWords: Record<string, Point2D[]> = {};
 
     const updateTextTargets = () => {
@@ -156,33 +154,29 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     };
     updateTextTargets();
 
+    // Generate Infinity Ribbon Particle System along Lemniscate equation
     const particles: Particle[] = Array.from({ length: totalCount }, (_, i) => {
-      const armAngle = Math.random() * Math.PI * 2;
-      const distFromCenter = Math.pow(Math.random(), 0.55) * galaxyRadius;
-      const spiralAngle = armAngle + distFromCenter * 0.006;
-      const scatter = (Math.random() - 0.5) * distFromCenter * 0.35;
+      const t = (i / totalCount) * Math.PI * 2;
+      const speed = 0.0004 + Math.random() * 0.0012;
+      
+      // Determine if particle belongs primarily to left cyan loop (cos(t) < 0) or right amber loop (cos(t) > 0)
+      const isCyanLoop = Math.cos(t) < 0 || Math.random() < 0.15;
+      const palette = isCyanLoop ? cyanPalette : amberPalette;
+      const color = palette[Math.floor(Math.random() * palette.length)];
 
-      const x = Math.cos(spiralAngle) * distFromCenter + scatter;
-      const y = Math.sin(spiralAngle) * distFromCenter + scatter;
-      const z = (Math.random() - 0.5) * galaxyRadius * 0.4;
-
-      const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
       const layerRand = Math.random();
-      const layer: 'bg' | 'mid' | 'fg' = layerRand < 0.3 ? 'bg' : layerRand < 0.8 ? 'mid' : 'fg';
+      const layer: 'bg' | 'mid' | 'fg' = layerRand < 0.25 ? 'bg' : layerRand < 0.75 ? 'mid' : 'fg';
 
       return {
-        x,
-        y,
-        z,
-        vx: (Math.random() - 0.5) * 0.04,
-        vy: (Math.random() - 0.5) * 0.04,
-        vz: (Math.random() - 0.5) * 0.02,
-        size: layer === 'fg' ? Math.random() * 2.8 + 1.2 : layer === 'mid' ? Math.random() * 1.5 + 0.6 : Math.random() * 0.8 + 0.2,
-        baseAlpha: layer === 'fg' ? Math.random() * 0.4 + 0.5 : layer === 'mid' ? Math.random() * 0.3 + 0.2 : Math.random() * 0.2 + 0.05,
+        t,
+        speed,
+        offsetX: (Math.random() - 0.5) * (layer === 'fg' ? 45 : 30),
+        offsetY: (Math.random() - 0.5) * (layer === 'fg' ? 45 : 30),
+        z: (Math.random() - 0.5) * 260,
+        size: layer === 'fg' ? Math.random() * 2.8 + 1.2 : layer === 'mid' ? Math.random() * 1.5 + 0.6 : Math.random() * 0.8 + 0.3,
+        baseAlpha: layer === 'fg' ? Math.random() * 0.4 + 0.55 : layer === 'mid' ? Math.random() * 0.35 + 0.25 : Math.random() * 0.25 + 0.08,
         color,
-        orbitAngle: Math.random() * Math.PI * 2,
-        orbitSpeed: (0.00015 + Math.random() * 0.0004) * (Math.random() < 0.5 ? 1 : -1),
-        orbitRadius: distFromCenter,
+        isCyanLoop,
         layer
       };
     });
@@ -204,16 +198,13 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
 
       // Initial page-load formation calculation (0s to 5s)
       let initialFormationWeight = 0;
-      if (!reduceMotion && elapsedSeconds > 0.4 && elapsedSeconds < 4.8) {
-        if (elapsedSeconds < 1.8) {
-          // Ramp up: disperse -> text
-          initialFormationWeight = (elapsedSeconds - 0.4) / 1.4;
-        } else if (elapsedSeconds < 3.2) {
-          // Hold formation
+      if (!reduceMotion && elapsedSeconds > 0.4 && elapsedSeconds < 4.5) {
+        if (elapsedSeconds < 1.6) {
+          initialFormationWeight = (elapsedSeconds - 0.4) / 1.2;
+        } else if (elapsedSeconds < 3.0) {
           initialFormationWeight = 1.0;
         } else {
-          // Dissolve: text -> disperse
-          initialFormationWeight = 1.0 - (elapsedSeconds - 3.2) / 1.6;
+          initialFormationWeight = 1.0 - (elapsedSeconds - 3.0) / 1.5;
         }
       }
       initialFormationWeight = Math.max(0, Math.min(1, initialFormationWeight));
@@ -223,7 +214,6 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       let scrollFormationWeight = 0;
 
       if (!reduceMotion && initialFormationWeight < 0.01 && currentScrollRatio > 0.15) {
-        // Define scroll ratio triggers for words
         const stages = [
           { min: 0.20, max: 0.38, word: 'ORCHESTRATE' },
           { min: 0.42, max: 0.60, word: 'REASON' },
@@ -236,58 +226,111 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
             const range = stage.max - stage.min;
             const progress = (currentScrollRatio - stage.min) / range;
             scrollActiveWord = stage.word;
-            scrollFormationWeight = Math.sin(progress * Math.PI); // smooth bell curve 0 -> 1 -> 0
+            scrollFormationWeight = Math.sin(progress * Math.PI);
             break;
           }
         }
       }
 
-      // Central core radial ambient glow
+      // Infinity Ribbon Center Center Origin
       const centerX = width / 2;
-      const centerY = height * 0.42;
+      const centerY = height * (isMobile ? 0.32 : 0.36);
 
-      const centralGlow = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, Math.min(width, height) * 0.6
-      );
-      centralGlow.addColorStop(0, 'rgba(139, 92, 246, 0.05)');
-      centralGlow.addColorStop(0.35, 'rgba(59, 130, 246, 0.025)');
-      centralGlow.addColorStop(0.7, 'rgba(6, 182, 212, 0.01)');
-      centralGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = centralGlow;
+      // Curve Scale Radius
+      const lemniscateScale = Math.min(width * 0.42, 640);
+
+      // --- RENDER WIREFRAME INFINITY GUIDE RINGS ---
+      ctx.save();
+      ctx.lineWidth = 1;
+
+      // Left Icy Cyan Elliptical Guide Loop
+      ctx.beginPath();
+      ctx.ellipse(centerX - lemniscateScale * 0.45, centerY, lemniscateScale * 0.42, lemniscateScale * 0.22, -0.1, 0, Math.PI * 2);
+      const cyanRingGlow = ctx.createLinearGradient(centerX - lemniscateScale, centerY, centerX, centerY);
+      cyanRingGlow.addColorStop(0, 'rgba(6, 182, 212, 0.12)');
+      cyanRingGlow.addColorStop(1, 'rgba(59, 130, 246, 0.03)');
+      ctx.strokeStyle = cyanRingGlow;
+      ctx.stroke();
+
+      // Right Golden Amber Elliptical Guide Loop
+      ctx.beginPath();
+      ctx.ellipse(centerX + lemniscateScale * 0.45, centerY, lemniscateScale * 0.42, lemniscateScale * 0.22, 0.1, 0, Math.PI * 2);
+      const amberRingGlow = ctx.createLinearGradient(centerX, centerY, centerX + lemniscateScale, centerY);
+      amberRingGlow.addColorStop(0, 'rgba(245, 158, 11, 0.03)');
+      amberRingGlow.addColorStop(1, 'rgba(251, 191, 36, 0.12)');
+      ctx.strokeStyle = amberRingGlow;
+      ctx.stroke();
+      ctx.restore();
+
+      // --- RENDER CENTRAL STARBURST FLARE & AMBIENT GLOW ---
+      const starGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.min(width, height) * 0.55);
+      starGlow.addColorStop(0, 'rgba(255, 245, 230, 0.12)');
+      starGlow.addColorStop(0.2, 'rgba(245, 158, 11, 0.04)');
+      starGlow.addColorStop(0.45, 'rgba(6, 182, 212, 0.025)');
+      starGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = starGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Mouse parallax offset calculation
+      // Central Starburst Flare Crosshair (Center Intersection)
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(time * 0.05);
+
+      // Horizontal / Vertical Flare Rays
+      const flareGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 90);
+      flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      flareGrad.addColorStop(0.2, 'rgba(251, 191, 36, 0.4)');
+      flareGrad.addColorStop(0.6, 'rgba(6, 182, 212, 0.15)');
+      flareGrad.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = flareGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 110, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 2.5, 110, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Core Diamond Flare
+      ctx.beginPath();
+      ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+      ctx.shadowBlur = 15;
+      ctx.fill();
+      ctx.restore();
+
+      // Mouse Parallax Offset Calculation
       const parallaxX = isMobile ? 0 : (mouseX - width / 2) * 0.012;
       const parallaxY = isMobile ? 0 : (mouseY - height / 2) * 0.012;
 
-      // Sort particles by Z-depth (back-to-front rendering)
+      // Sort Particles by Z-depth (Back-to-Front Rendering)
       const sortedParticles = [...particles].sort((a, b) => a.z - b.z);
 
       sortedParticles.forEach((p, idx) => {
         if (!reduceMotion) {
-          // Orbital physics
-          p.orbitAngle += p.orbitSpeed;
-          p.x += Math.cos(p.orbitAngle) * 0.06;
-          p.y += Math.sin(p.orbitAngle) * 0.06;
-
-          // Slow drift motion
-          p.x += p.vx;
-          p.y += p.vy;
-          p.z += p.vz;
-
-          // Soft boundary wrap
-          if (Math.abs(p.x) > galaxyRadius * 1.6) p.vx *= -1;
-          if (Math.abs(p.y) > galaxyRadius * 1.6) p.vy *= -1;
-          if (Math.abs(p.z) > galaxyRadius * 0.6) p.vz *= -1;
+          // Flow along Bernoulli Lemniscate parametric curve
+          p.t += p.speed;
+          if (p.t > Math.PI * 2) p.t -= Math.PI * 2;
         }
 
-        // 3D perspective projection
-        const scale = focalLength / (focalLength + p.z);
-        let screenX = centerX + (p.x + parallaxX) * scale;
-        let screenY = centerY + (p.y + parallaxY) * scale;
+        // Bernoulli Lemniscate formula: x = a*cos(t)/(1+sin^2(t)), y = a*sin(t)*cos(t)/(1+sin^2(t))
+        const sinT = Math.sin(p.t);
+        const cosT = Math.cos(p.t);
+        const denom = 1 + sinT * sinT;
+        const curveX = (lemniscateScale * cosT) / denom;
+        const curveY = (lemniscateScale * sinT * cosT * 0.75) / denom;
 
-        // Apply Initial Formation Target Morphing
+        const posX = curveX + p.offsetX;
+        const posY = curveY + p.offsetY;
+
+        // 3D Perspective Projection
+        const scale = focalLength / (focalLength + p.z);
+        let screenX = centerX + (posX + parallaxX) * scale;
+        let screenY = centerY + (posY + parallaxY) * scale;
+
+        // Apply Initial Page-Load Text Formation Target Morphing
         if (initialFormationWeight > 0.01 && targetWords.OPENING) {
           const target = targetWords.OPENING[idx % targetWords.OPENING.length];
           const tx = centerX + target.x;
@@ -307,10 +350,8 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
         }
 
         const projectedSize = p.size * scale;
-
-        // Depth-aware opacity & soft twinkling
         const depthFactor = Math.max(0.15, Math.min(1, scale));
-        const twinkle = reduceMotion ? 1 : 0.75 + 0.25 * Math.sin(time * 2.2 + p.orbitAngle * 8);
+        const twinkle = reduceMotion ? 1 : 0.75 + 0.25 * Math.sin(time * 2.5 + idx);
         const alpha = p.baseAlpha * depthFactor * twinkle;
 
         if (alpha < 0.015) return;
@@ -318,15 +359,15 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
 
         const [r, g, b] = p.color;
 
-        // Soft bloom aura for foreground & bright particles
-        if (p.layer === 'fg' && projectedSize > 1.2) {
+        // Foreground Soft Bloom Aura
+        if (p.layer === 'fg' && projectedSize > 1.3) {
           ctx.beginPath();
-          ctx.arc(screenX, screenY, projectedSize * 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.09})`;
+          ctx.arc(screenX, screenY, projectedSize * 3.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.12})`;
           ctx.fill();
         }
 
-        // Core particle point
+        // Core Particle Point
         ctx.beginPath();
         ctx.arc(screenX, screenY, Math.max(0.4, projectedSize), 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -354,3 +395,4 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
     </div>
   );
 };
+
