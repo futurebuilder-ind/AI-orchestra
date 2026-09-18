@@ -213,32 +213,25 @@ export const CommandCenterCoreVisualizer: React.FC = () => {
     <div className="command-core-visualizer-container">
       {/* 4 Corner Telemetry Overlays */}
       <div className="telemetry-corner-item top-left-telemetry">
-        <span>ORCHESTRATE</span>
-        <span>REASON</span>
-        <span>SYNTHESIZE</span>
-        <span>CONSENSUS</span>
+        <span className="telemetry-head">ORCHESTRATE</span>
+        <span className="telemetry-sub">REASON // SYNTHESIZE // CONSENSUS</span>
         <div className="telemetry-bar" />
       </div>
 
       <div className="telemetry-corner-item top-right-telemetry">
-        <span>MULTI-MODEL</span>
-        <span>INTELLIGENCE</span>
-        <span>FOR A BRIGHTER</span>
-        <span>TOMORROW</span>
+        <span className="telemetry-head">MULTI-MODEL INTELLIGENCE</span>
+        <span className="telemetry-sub">FOR A BRIGHTER TOMORROW</span>
       </div>
 
-      <div className="telemetry-corner-item mid-right-telemetry">
-        <span>IDEAS</span>
-        <span>MODELS</span>
-        <span>DATA</span>
-        <span>PEOPLE</span>
+      <div className="telemetry-corner-item mid-left-telemetry">
+        <span className="telemetry-head">IDEAS // MODELS</span>
+        <span className="telemetry-sub">DATA // PEOPLE</span>
         <div className="telemetry-bar" />
       </div>
 
       <div className="telemetry-corner-item bottom-right-telemetry">
-        <span>BUILT</span>
-        <span>FOR HUMAN</span>
-        <span>POTENTIAL</span>
+        <span className="telemetry-head">BUILT FOR HUMAN POTENTIAL</span>
+        <span className="telemetry-sub">LATENCY: 24MS // STATUS: ONLINE</span>
       </div>
 
       {/* Background Canvas */}
@@ -248,7 +241,6 @@ export const CommandCenterCoreVisualizer: React.FC = () => {
       <div className="command-core-typography">
         <h1 className="command-core-title">
           <span className="title-ai">AI</span>
-          <span className="title-gap" />
           <span className="title-orchestra">ORCHESTRA</span>
         </h1>
         <p className="command-core-subtitle">
@@ -258,3 +250,4 @@ export const CommandCenterCoreVisualizer: React.FC = () => {
     </div>
   );
 };
+
