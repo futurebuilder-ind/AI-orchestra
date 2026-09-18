@@ -20,6 +20,7 @@ interface SidebarProps {
   onDeleteConvo: (id: string, e: React.MouseEvent) => void;
   onSelectTab: (tab: WorkspaceTab) => void;
   onOpenCustomization: () => void;
+  onGoToLanding?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -34,14 +35,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onStartNewChat,
   onDeleteConvo,
   onSelectTab,
-  onOpenCustomization
+  onOpenCustomization,
+  onGoToLanding
 }) => {
   const isOnlineDeployed = typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''} ${isClosed ? 'closed' : ''}`}>
       {/* BRAND HEADER */}
-      <div className="sidebar-header">
+      <div 
+        className="sidebar-header" 
+        onClick={() => onGoToLanding && onGoToLanding()}
+        style={{ cursor: onGoToLanding ? 'pointer' : 'default' }}
+        title="Return to Landing Page"
+      >
         <AILogo size={26} showText={true} />
         <span className={`brand-title-badge ${isOnlineDeployed ? 'cloud' : 'local'}`} style={{ marginLeft: 'auto' }}>
           {isOnlineDeployed ? 'CLOUD' : 'LOCAL'}

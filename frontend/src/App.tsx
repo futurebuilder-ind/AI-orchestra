@@ -11,6 +11,7 @@ import { CustomizationDrawer } from './components/CustomizationDrawer';
 import { FuturisticHero } from './components/FuturisticHero';
 import { CosmicBackground } from './components/CosmicBackground';
 import { FeaturesSection } from './components/FeaturesSection';
+import { AILogo } from './components/AILogo';
 import { 
   Conversation, Message, StepLog, HardwareInfo, WorkspaceTab, 
   RunItem, PanelConfig, EffectsConfig, WorkspaceDensity, AgentToast, CouncilMode 
@@ -30,6 +31,7 @@ export const stripThinking = (text: string): string => {
 export default function App() {
   // Navigation & Workspace State
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('orchestra');
+  const [workspaceMode, setWorkspaceMode] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     const saved = localStorage.getItem('ai_orchestra_sidebar_open');
@@ -569,345 +571,388 @@ export default function App() {
         </div>
       )}
 
-      {/* MOBILE SIDEBAR BACKDROP OVERLAY */}
-      {mobileSidebarOpen && (
-        <div 
-          className="sidebar-backdrop" 
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* SIDEBAR NAVIGATION */}
-      <Sidebar
-        conversations={conversations}
-        activeConvoId={activeConvoId}
-        activeTab={activeTab}
-        ollamaRunning={ollamaRunning}
-        activeModelName={activeModelDisplay}
-        isOpen={mobileSidebarOpen}
-        isClosed={!sidebarOpen}
-        onSelectConvo={(id) => {
-          setActiveConvoId(id);
-          setActiveTab('orchestra');
-          setMobileSidebarOpen(false);
-        }}
-        onStartNewChat={startNewChat}
-        onDeleteConvo={deleteConvo}
-        onSelectTab={(tab) => {
-          setActiveTab(tab);
-          setMobileSidebarOpen(false);
-        }}
-        onOpenCustomization={() => setIsCustomizationOpen(true)}
-      />
-
-      {/* MAIN WORKSPACE */}
-      <main className="main-workspace">
-        {/* TOP HEADER */}
-        <header className="main-header">
-          <div className="header-left">
-            <button 
-              className="action-btn mobile-menu-btn" 
-              onClick={() => {
-                setSidebarOpen(!sidebarOpen);
-                setMobileSidebarOpen(!mobileSidebarOpen);
-              }}
-              title="Toggle Sidebar Menu"
-              aria-label="Toggle Sidebar Menu"
-            >
-              <Menu size={14} style={{ color: 'var(--accent-color)' }} />
-            </button>
-            <span className="header-title">
-              {activeTab === 'orchestra' && (activeConvoId ? 'CHATS // SESSION LOG' : 'CHATS // NEW SESSION')}
-              {activeTab === 'models' && 'WORKSPACE // MODELS'}
-              {activeTab === 'runs' && 'WORKSPACE // RUNS HISTORY'}
-              {activeTab === 'files' && 'WORKSPACE // DOCUMENTS'}
-              {activeTab === 'settings' && 'SYSTEM // SETTINGS'}
-              {activeTab === 'usage' && 'SYSTEM // USAGE METRICS'}
-            </span>
-          </div>
-
-          <div className="header-actions">
-            <button className="action-btn" onClick={() => setIsCustomizationOpen(true)} aria-label="Customize Layout">
-              <Sliders size={13} style={{ color: 'var(--accent-color)' }} />
-              <span>Customize Layout</span>
-            </button>
-          </div>
-        </header>
-
-        {/* WORKSPACE CONTENT BODY */}
-        {activeTab === 'models' && (
-          <ModelsView
-            ollamaRunning={ollamaRunning}
-            ollamaModels={ollamaModels}
-            geminiAvailable={geminiAvailable}
-            geminiModels={geminiModels}
-            openrouterAvailable={openrouterAvailable}
-            openrouterModels={openrouterModels}
-            selectedModels={selectedModels}
-            loadingModels={loadingModels}
-            onRefresh={fetchModels}
-            onToggleModel={handleModelToggle}
-          />
-        )}
-
-        {activeTab === 'runs' && (
-          <RunsView runs={runsHistory} />
-        )}
-
-        {(activeTab === 'settings' || activeTab === 'usage') && (
-          <SettingsView
-            agentCount={agentCount}
-            onChangeAgentCount={setAgentCount}
-            councilMode={councilMode}
-            onChangeCouncilMode={setCouncilMode}
-            maxIterations={maxIterations}
-            onChangeMaxIterations={setMaxIterations}
-            sandboxEnabled={sandboxEnabled}
-            onToggleSandbox={setSandboxEnabled}
-            ollamaUrl={ollamaUrl}
-            onChangeOllamaUrl={setOllamaUrl}
-            geminiApiKey={geminiApiKey}
-            onChangeGeminiApiKey={setGeminiApiKey}
-            openrouterApiKey={openrouterApiKey}
-            onChangeOpenrouterApiKey={setOpenrouterApiKey}
-            hardware={hardware}
-          />
-        )}
-
-        {activeTab === 'files' && (
-          <div className="workspace-page">
-            <div className="page-title">
-              <span>DOCUMENT PROCESSING & RETRIEVAL</span>
-              <span className="monochrome-badge">FILES</span>
-            </div>
-            <div className="settings-group">
-              <div className="group-title">UPLOADED CONTEXTS</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                No active document contexts loaded. Attach files in the chat interface to process documents with chunk retrieval.
+      {/* MAIN CONTAINER LAYOUT */}
+      {!workspaceMode && activeTab === 'orchestra' && !activeConvoId && messages.length === 0 && runStepLogs.length === 0 ? (
+        /* CINEMATIC LANDING EXPERIENCE */
+        <div className="landing-mode-container" style={{ width: '100%', minHeight: '100vh', overflowY: 'auto', position: 'relative', zIndex: 1 }}>
+          {/* FLOATING GLASS NAVBAR */}
+          <div className="landing-navbar-wrapper">
+            <nav className="landing-navbar">
+              <AILogo size={26} showText={true} />
+              <div className="landing-nav-links desktop-only-inline">
+                <a href="#features" className="landing-nav-link">Features</a>
+                <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setWorkspaceMode(true)}>Architecture</button>
+                <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('models'); setWorkspaceMode(true); }}>Models</button>
+                <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('files'); setWorkspaceMode(true); }}>Docs</button>
               </div>
-            </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button className="landing-launch-btn" onClick={() => setWorkspaceMode(true)}>
+                  Launch Console
+                </button>
+              </div>
+            </nav>
           </div>
-        )}
 
-        {activeTab === 'orchestra' && (
-          <div className="workspace-body">
-            {/* DYNAMIC FUTURISTIC HERO */}
-            {messages.length === 0 && runStepLogs.length === 0 ? (
-              <>
-                <FuturisticHero
-                  isTyping={query.length > 0}
-                  onQuickQuery={(q) => handleRun(q)}
-                  availableModels={[...ollamaModels, ...geminiModels, ...openrouterModels]}
-                />
-                <FeaturesSection />
-                <footer className="site-footer">
-                  <div className="site-footer-inner">
-                    <span className="footer-brand">AI ORCHESTRA</span>
-                    <div className="footer-links">
-                      <a href="#features">Features</a>
-                      <a href="https://github.com/futurebuilder-ind/AI-orchestra" target="_blank" rel="noopener noreferrer">GitHub</a>
-                    </div>
-                    <span className="footer-copy">© {new Date().getFullYear()} AI Orchestra. Built for powerful AI workflows.</span>
+          {/* DYNAMIC FUTURISTIC HERO */}
+          <FuturisticHero
+            isTyping={query.length > 0}
+            onQuickQuery={(q) => {
+              setWorkspaceMode(true);
+              handleRun(q);
+            }}
+            availableModels={[...ollamaModels, ...geminiModels, ...openrouterModels]}
+          />
+
+          {/* CAPABILITIES SECTION */}
+          <FeaturesSection />
+
+          {/* SITE FOOTER */}
+          <footer className="site-footer">
+            <div className="site-footer-inner">
+              <span className="footer-brand">AI ORCHESTRA</span>
+              <div className="footer-links">
+                <a href="#features">Features</a>
+                <a href="https://github.com/futurebuilder-ind/AI-orchestra" target="_blank" rel="noopener noreferrer">GitHub</a>
+              </div>
+              <span className="footer-copy">© {new Date().getFullYear()} AI Orchestra. Built for powerful AI workflows.</span>
+            </div>
+          </footer>
+        </div>
+      ) : (
+        /* TECHNICAL COMMAND CENTER WORKSPACE */
+        <>
+          {/* MOBILE SIDEBAR BACKDROP OVERLAY */}
+          {mobileSidebarOpen && (
+            <div 
+              className="sidebar-backdrop" 
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+          )}
+
+          {/* SIDEBAR NAVIGATION */}
+          <Sidebar
+            conversations={conversations}
+            activeConvoId={activeConvoId}
+            activeTab={activeTab}
+            ollamaRunning={ollamaRunning}
+            activeModelName={activeModelDisplay}
+            isOpen={mobileSidebarOpen}
+            isClosed={!sidebarOpen}
+            onSelectConvo={(id) => {
+              setActiveConvoId(id);
+              setActiveTab('orchestra');
+              setWorkspaceMode(true);
+              setMobileSidebarOpen(false);
+            }}
+            onStartNewChat={() => {
+              startNewChat();
+              setWorkspaceMode(true);
+            }}
+            onDeleteConvo={deleteConvo}
+            onSelectTab={(tab) => {
+              setActiveTab(tab);
+              setWorkspaceMode(true);
+              setMobileSidebarOpen(false);
+            }}
+            onOpenCustomization={() => setIsCustomizationOpen(true)}
+            onGoToLanding={() => {
+              setWorkspaceMode(false);
+              setActiveConvoId(null);
+              setMessages([]);
+            }}
+          />
+
+          {/* MAIN WORKSPACE */}
+          <main className="main-workspace">
+            {/* TOP HEADER */}
+            <header className="main-header">
+              <div className="header-left">
+                <button 
+                  className="action-btn mobile-menu-btn" 
+                  onClick={() => {
+                    setSidebarOpen(!sidebarOpen);
+                    setMobileSidebarOpen(!mobileSidebarOpen);
+                  }}
+                  title="Toggle Sidebar Menu"
+                  aria-label="Toggle Sidebar Menu"
+                >
+                  <Menu size={14} style={{ color: 'var(--accent-color)' }} />
+                </button>
+                <span className="header-title">
+                  {activeTab === 'orchestra' && (activeConvoId ? 'CHATS // SESSION LOG' : 'CHATS // NEW SESSION')}
+                  {activeTab === 'models' && 'WORKSPACE // MODELS'}
+                  {activeTab === 'runs' && 'WORKSPACE // RUNS HISTORY'}
+                  {activeTab === 'files' && 'WORKSPACE // DOCUMENTS'}
+                  {activeTab === 'settings' && 'SYSTEM // SETTINGS'}
+                  {activeTab === 'usage' && 'SYSTEM // USAGE METRICS'}
+                </span>
+              </div>
+
+              <div className="header-actions">
+                <button className="action-btn" onClick={() => setWorkspaceMode(false)}>
+                  <span>Landing Page</span>
+                </button>
+                <button className="action-btn" onClick={() => setIsCustomizationOpen(true)} aria-label="Customize Layout">
+                  <Sliders size={13} style={{ color: 'var(--accent-color)' }} />
+                  <span>Customize Layout</span>
+                </button>
+              </div>
+            </header>
+
+            {/* WORKSPACE CONTENT BODY */}
+            {activeTab === 'models' && (
+              <ModelsView
+                ollamaRunning={ollamaRunning}
+                ollamaModels={ollamaModels}
+                geminiAvailable={geminiAvailable}
+                geminiModels={geminiModels}
+                openrouterAvailable={openrouterAvailable}
+                openrouterModels={openrouterModels}
+                selectedModels={selectedModels}
+                loadingModels={loadingModels}
+                onRefresh={fetchModels}
+                onToggleModel={handleModelToggle}
+              />
+            )}
+
+            {activeTab === 'runs' && (
+              <RunsView runs={runsHistory} />
+            )}
+
+            {(activeTab === 'settings' || activeTab === 'usage') && (
+              <SettingsView
+                agentCount={agentCount}
+                onChangeAgentCount={setAgentCount}
+                councilMode={councilMode}
+                onChangeCouncilMode={setCouncilMode}
+                maxIterations={maxIterations}
+                onChangeMaxIterations={setMaxIterations}
+                sandboxEnabled={sandboxEnabled}
+                onToggleSandbox={setSandboxEnabled}
+                ollamaUrl={ollamaUrl}
+                onChangeOllamaUrl={setOllamaUrl}
+                geminiApiKey={geminiApiKey}
+                onChangeGeminiApiKey={setGeminiApiKey}
+                openrouterApiKey={openrouterApiKey}
+                onChangeOpenrouterApiKey={setOpenrouterApiKey}
+                hardware={hardware}
+              />
+            )}
+
+            {activeTab === 'files' && (
+              <div className="workspace-page">
+                <div className="page-title">
+                  <span>DOCUMENT PROCESSING & RETRIEVAL</span>
+                  <span className="monochrome-badge">FILES</span>
+                </div>
+                <div className="settings-group">
+                  <div className="group-title">UPLOADED CONTEXTS</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    No active document contexts loaded. Attach files in the chat interface to process documents with chunk retrieval.
                   </div>
-                </footer>
-              </>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* MESSAGES LIST */}
-                {messages.map((msg, msgIndex) => (
-                  <div key={msg.id} className="message-wrapper">
-                    {msg.role === 'user' ? (
-                      <div className="user-message">
-                        <div className="message-meta">USER PROMPT</div>
-                        <div className="user-message-content">{msg.content}</div>
-                      </div>
-                    ) : (
-                      <div className="assistant-message">
-                        {/* PAST EXECUTION LOGS */}
-                        {panelConfig.executionGraph && msg.step_logs && msg.step_logs.length > 0 && (
-                          <div className="timeline-card">
-                            <div className="timeline-header">
-                              <span className="timeline-header-title">
-                                EXECUTION TIMELINE LOG
-                              </span>
-                              <span className="status-indicator">[COMPLETED]</span>
-                            </div>
-
-                            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {msg.step_logs.map((step, idx) => (
-                                <div key={idx} style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
-                                  <div 
-                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', cursor: 'pointer' }}
-                                    onClick={() => toggleStepExpansion(`${msg.id}-${step.step}`)}
-                                  >
-                                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, textTransform: 'capitalize' }}>
-                                      {step.step.replace('_', ' ')}: {step.message}
-                                    </span>
-                                    <span style={{ color: 'var(--text-muted)' }}>
-                                      {expandedSteps[`${msg.id}-${step.step}`] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                    </span>
-                                  </div>
-
-                                  {expandedSteps[`${msg.id}-${step.step}`] && step.data && (
-                                    <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                      {step.step === 'parallel_execution' && Array.isArray(step.data) && (
-                                        <div className="candidate-grid">
-                                          {step.data.map((cand: any, cIdx: number) => (
-                                            <div key={cIdx} className="candidate-card">
-                                              <div className="candidate-card-header">
-                                                <span>{cand.agentId || `AGENT 0${cIdx + 1}`} ({cand.model})</span>
-                                                <span>{cand.error ? '[FAILED]' : '[COMPLETE]'}</span>
-                                              </div>
-                                              <div className="candidate-content">
-                                                <div style={{ fontWeight: 600, fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                                                  Role: {cand.role || 'Solver'}
-                                                </div>
-                                                {cand.error ? cand.error : stripThinking(cand.resultSummary || cand.response || '')}
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* FINAL ANSWER CARD WITH RESPONSE ACTIONS */}
-                        <div className="final-answer-box glow-active-steady">
-                          <div className="final-answer-header">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span>FINAL SYNTHESIZED SOLUTION</span>
-                              <span className="status-indicator">✓ COMPLETE</span>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <button
-                                className="command-btn"
-                                onClick={() => copyToClipboard(stripThinking(msg.content))}
-                                title="Copy answer"
-                              >
-                                <Copy size={12} />
-                                <span>Copy</span>
-                              </button>
-                              <button
-                                className="command-btn"
-                                onClick={() => {
-                                  const prevUserMsg = messages[msgIndex - 1];
-                                  if (prevUserMsg && prevUserMsg.role === 'user') {
-                                    handleRun(prevUserMsg.content);
-                                  }
-                                }}
-                                title="Regenerate solution"
-                              >
-                                <RotateCcw size={12} />
-                                <span>Regenerate</span>
-                              </button>
-                              <button
-                                className="command-btn"
-                                onClick={() => saveResponseToFile(stripThinking(msg.content))}
-                                title="Save to file"
-                              >
-                                <Download size={12} />
-                                <span>Save</span>
-                              </button>
-                              <button
-                                className="command-btn active"
-                                onClick={() => setExpandedMessage(msg)}
-                                title="Expand to full screen"
-                              >
-                                <Maximize2 size={12} />
-                                <span>Expand</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div
-                            className="final-content"
-                            dangerouslySetInnerHTML={{
-                              __html: stripThinking(msg.content)
-                                .replace(/### (.*?)\n/g, '<h3>$1</h3>')
-                                .replace(/## (.*?)\n/g, '<h2>$1</h2>')
-                                .replace(/# (.*?)\n/g, '<h1>$1</h1>')
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/`([^`]+)`/g, '<code>$1</code>')
-                                .replace(/```(?:[a-zA-Z]*)\n([\s\S]*?)\n```/g, '<pre><code>$1</code></pre>')
-                                .replace(/\n/g, '<br />')
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* LIVE EXECUTION TIMELINE & VISUALIZER */}
-                {running && (
-                  <div>
-                    {panelConfig.executionGraph && (
-                      <OrchestrationVisualizer
-                        stepLogs={runStepLogs}
-                        selectedModels={selectedModels}
-                        councilMode={councilMode}
-                        effects={effectsConfig}
-                      />
-                    )}
-
-                    {panelConfig.agentActivity && (
-                      <div className="timeline-card">
-                        <div className="timeline-header">
-                          <span className="timeline-header-title">
-                            <span className="pulse-status">●</span> COUNCIL RUN ({councilMode.toUpperCase()} MODE)
-                          </span>
-                          <span className="status-indicator pulse-status">[EXECUTING]</span>
-                        </div>
-
-                        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {runStepLogs.map((step, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                              <span style={{ color: step.status === 'running' ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: step.status === 'running' ? 600 : 400 }}>
-                                {step.step.replace('_', ' ').toUpperCase()}: {step.message}
-                              </span>
-                              <span>
-                                {step.status === 'completed' && '✓'}
-                                {step.status === 'running' && '●'}
-                                {step.status === 'pending' && '○'}
-                                {step.status === 'failed' && '✕'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
             )}
 
-            {/* COMMAND INTERFACE INPUT AREA */}
-            <InputArea
-              query={query}
-              onChangeQuery={setQuery}
-              onSend={() => handleRun()}
-              onFileUpload={handleFileUpload}
-              attachedFile={attachedFile}
-              onRemoveFile={() => { setAttachedFile(null); setFileContext(''); }}
-              running={running}
-              uploading={uploading}
-              availableModels={[...ollamaModels, ...geminiModels]}
-              selectedModel={selectedModels[0] || 'Qwen 3 4B'}
-              onSelectModel={(model) => setSelectedModels([model])}
-              agentCount={agentCount}
-              onChangeAgentCount={setAgentCount}
-              councilMode={councilMode}
-              onChangeCouncilMode={setCouncilMode}
-            />
-          </div>
-        )}
-      </main>
+            {activeTab === 'orchestra' && (
+              <div className="workspace-body">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* MESSAGES LIST */}
+                  {messages.map((msg, msgIndex) => (
+                    <div key={msg.id} className="message-wrapper">
+                      {msg.role === 'user' ? (
+                        <div className="user-message">
+                          <div className="message-meta">USER PROMPT</div>
+                          <div className="user-message-content">{msg.content}</div>
+                        </div>
+                      ) : (
+                        <div className="assistant-message">
+                          {/* PAST EXECUTION LOGS */}
+                          {panelConfig.executionGraph && msg.step_logs && msg.step_logs.length > 0 && (
+                            <div className="timeline-card">
+                              <div className="timeline-header">
+                                <span className="timeline-header-title">
+                                  EXECUTION TIMELINE LOG
+                                </span>
+                                <span className="status-indicator">[COMPLETED]</span>
+                              </div>
+
+                              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {msg.step_logs.map((step, idx) => (
+                                  <div key={idx} style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
+                                    <div 
+                                      style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', cursor: 'pointer' }}
+                                      onClick={() => toggleStepExpansion(`${msg.id}-${step.step}`)}
+                                    >
+                                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, textTransform: 'capitalize' }}>
+                                        {step.step.replace('_', ' ')}: {step.message}
+                                      </span>
+                                      <span style={{ color: 'var(--text-muted)' }}>
+                                        {expandedSteps[`${msg.id}-${step.step}`] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                      </span>
+                                    </div>
+
+                                    {expandedSteps[`${msg.id}-${step.step}`] && step.data && (
+                                      <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                        {step.step === 'parallel_execution' && Array.isArray(step.data) && (
+                                          <div className="candidate-grid">
+                                            {step.data.map((cand: any, cIdx: number) => (
+                                              <div key={cIdx} className="candidate-card">
+                                                <div className="candidate-card-header">
+                                                  <span>{cand.agentId || `AGENT 0${cIdx + 1}`} ({cand.model})</span>
+                                                  <span>{cand.error ? '[FAILED]' : '[COMPLETE]'}</span>
+                                                </div>
+                                                <div className="candidate-content">
+                                                  <div style={{ fontWeight: 600, fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                                    Role: {cand.role || 'Solver'}
+                                                  </div>
+                                                  {cand.error ? cand.error : stripThinking(cand.resultSummary || cand.response || '')}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* FINAL ANSWER CARD WITH RESPONSE ACTIONS */}
+                          <div className="final-answer-box glow-active-steady">
+                            <div className="final-answer-header">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>FINAL SYNTHESIZED SOLUTION</span>
+                                <span className="status-indicator">✓ COMPLETE</span>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <button
+                                  className="command-btn"
+                                  onClick={() => copyToClipboard(stripThinking(msg.content))}
+                                  title="Copy answer"
+                                >
+                                  <Copy size={12} />
+                                  <span>Copy</span>
+                                </button>
+                                <button
+                                  className="command-btn"
+                                  onClick={() => {
+                                    const prevUserMsg = messages[msgIndex - 1];
+                                    if (prevUserMsg && prevUserMsg.role === 'user') {
+                                      handleRun(prevUserMsg.content);
+                                    }
+                                  }}
+                                  title="Regenerate solution"
+                                >
+                                  <RotateCcw size={12} />
+                                  <span>Regenerate</span>
+                                </button>
+                                <button
+                                  className="command-btn"
+                                  onClick={() => saveResponseToFile(stripThinking(msg.content))}
+                                  title="Save to file"
+                                >
+                                  <Download size={12} />
+                                  <span>Save</span>
+                                </button>
+                                <button
+                                  className="command-btn active"
+                                  onClick={() => setExpandedMessage(msg)}
+                                  title="Expand to full screen"
+                                >
+                                  <Maximize2 size={12} />
+                                  <span>Expand</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            <div
+                              className="final-content"
+                              dangerouslySetInnerHTML={{
+                                __html: stripThinking(msg.content)
+                                  .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+                                  .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+                                  .replace(/# (.*?)\n/g, '<h1>$1</h1>')
+                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                  .replace(/`([^`]+)`/g, '<code>$1</code>')
+                                  .replace(/```(?:[a-zA-Z]*)\n([\s\S]*?)\n```/g, '<pre><code>$1</code></pre>')
+                                  .replace(/\n/g, '<br />')
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* LIVE EXECUTION TIMELINE & VISUALIZER */}
+                  {running && (
+                    <div>
+                      {panelConfig.executionGraph && (
+                        <OrchestrationVisualizer
+                          stepLogs={runStepLogs}
+                          selectedModels={selectedModels}
+                          councilMode={councilMode}
+                          effects={effectsConfig}
+                        />
+                      )}
+
+                      {panelConfig.agentActivity && (
+                        <div className="timeline-card">
+                          <div className="timeline-header">
+                            <span className="timeline-header-title">
+                              <span className="pulse-status">●</span> COUNCIL RUN ({councilMode.toUpperCase()} MODE)
+                            </span>
+                            <span className="status-indicator pulse-status">[EXECUTING]</span>
+                          </div>
+
+                          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {runStepLogs.map((step, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+                                <span style={{ color: step.status === 'running' ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: step.status === 'running' ? 600 : 400 }}>
+                                  {step.step.replace('_', ' ').toUpperCase()}: {step.message}
+                                </span>
+                                <span>
+                                  {step.status === 'completed' && '✓'}
+                                  {step.status === 'running' && '●'}
+                                  {step.status === 'pending' && '○'}
+                                  {step.status === 'failed' && '✕'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* COMMAND INTERFACE INPUT AREA */}
+                <InputArea
+                  query={query}
+                  onChangeQuery={setQuery}
+                  onSend={() => handleRun()}
+                  onFileUpload={handleFileUpload}
+                  attachedFile={attachedFile}
+                  onRemoveFile={() => { setAttachedFile(null); setFileContext(''); }}
+                  running={running}
+                  uploading={uploading}
+                  availableModels={[...ollamaModels, ...geminiModels]}
+                  selectedModel={selectedModels[0] || 'Qwen 3 4B'}
+                  onSelectModel={(model) => setSelectedModels([model])}
+                  agentCount={agentCount}
+                  onChangeAgentCount={setAgentCount}
+                  councilMode={councilMode}
+                  onChangeCouncilMode={setCouncilMode}
+                />
+              </div>
+            )}
+          </main>
+        </>
+      )}
     </div>
   );
 }
