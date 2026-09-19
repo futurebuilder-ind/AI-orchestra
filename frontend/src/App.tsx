@@ -689,8 +689,8 @@ export default function App() {
             <nav className="landing-navbar">
               <AILogo size={28} showText={true} />
               <div className="landing-nav-links desktop-only-inline">
-                <a href="#features" className="landing-nav-link">Product</a>
-                <a href="#features" className="landing-nav-link">Research</a>
+                <a href="#features" className="landing-nav-link" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }}>Product</a>
+                <a href="#features" className="landing-nav-link" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }}>Research</a>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setWorkspaceMode(true)}>Architecture</button>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('models'); setWorkspaceMode(true); }}>Models</button>
                 <button className="landing-nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => { setActiveTab('files'); setWorkspaceMode(true); }}>Docs</button>

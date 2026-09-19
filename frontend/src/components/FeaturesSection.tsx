@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Cpu, Layers, Zap, FileText, ArrowRight } from 'lucide-react';
-import { GravitationalBlackHoleEngine } from './GravitationalBlackHoleEngine';
 import { SectionParticleField } from './SectionParticleField';
 
 const capabilities = [
@@ -141,13 +140,10 @@ export const FeaturesSection: React.FC = () => {
             })}
           </div>
 
-          {/* 2. Center-Left Gravitational Black Hole Particle Visualizer */}
-          <div className="gravitational-canvas-stage">
-            <GravitationalBlackHoleEngine 
-              activeStep={activeStep}
-              stepProgress={stepProgress}
-              totalProgress={totalProgress}
-            />
+          {/* 2. Center-Left Unified Gravitational Black Hole Docking Stage */}
+          <div className="gravitational-canvas-stage" data-active-step={activeStep} aria-hidden="true">
+            {/* The unified background particle black hole docks directly into this stage */}
+            <div className="gravitational-dock-indicator" />
           </div>
 
           {/* 3. Center-Right Editorial Capability Stack */}
