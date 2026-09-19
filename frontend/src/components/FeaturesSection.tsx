@@ -48,39 +48,58 @@ const capabilities = [
 
 export const FeaturesSection: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const [activeStep, setActiveStep] = useState(1); // Default to 1 (COUNCIL) matching reference mockup
-  const [stepProgress, setStepProgress] = useState(0.55);
-  const [totalProgress, setTotalProgress] = useState(1.5);
+  const [activeStep, setActiveStep] = useState(0);
+  const [stepProgress, setStepProgress] = useState(0);
+  const [totalProgress, setTotalProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-  // Deterministic, Bidirectional Scroll Scrubbing
+  const STEP_DURATION_MS = 3800; // 3.8s per capability cycle
+  const currentStepRef = useRef(0);
+  const elapsedTimeRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
+
+  // Manual jump to a specific step
+  const handleJumpToStep = (idx: number) => {
+    currentStepRef.current = idx;
+    elapsedTimeRef.current = idx * STEP_DURATION_MS;
+    setActiveStep(idx);
+    setStepProgress(0);
+    setTotalProgress(idx);
+  };
+
+  // Continuous automatic cycle animation
   useEffect(() => {
-    const handleScroll = () => {
-      const section = sectionRef.current;
-      if (!section) return;
+    let animId: number;
 
-      const rect = section.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
+    const animate = (now: number) => {
+      if (lastTimeRef.current === null) {
+        lastTimeRef.current = now;
+      }
+      const delta = now - lastTimeRef.current;
+      lastTimeRef.current = now;
 
-      // Calculate progress while section traverses the viewport
-      const totalDist = rect.height + windowHeight;
-      const currentPos = windowHeight - rect.top;
-      const rawProgress = Math.max(0, Math.min(1, currentPos / totalDist));
+      if (!isPaused) {
+        elapsedTimeRef.current += delta;
+        const totalDuration = STEP_DURATION_MS * 4;
+        const loopTime = elapsedTimeRef.current % totalDuration;
+        const currentStep = Math.floor(loopTime / STEP_DURATION_MS);
+        const progressInStep = (loopTime % STEP_DURATION_MS) / STEP_DURATION_MS;
+        const totalProg = (loopTime / totalDuration) * 4;
 
-      // Map progress from 0 to 4 steps
-      const scaledProgress = rawProgress * 4;
-      const currentStep = Math.min(3, Math.max(0, Math.floor(scaledProgress)));
-      const currentStepProgress = scaledProgress - currentStep;
+        if (currentStep !== currentStepRef.current) {
+          currentStepRef.current = currentStep;
+          setActiveStep(currentStep);
+        }
+        setStepProgress(progressInStep);
+        setTotalProgress(totalProg);
+      }
 
-      setActiveStep(currentStep);
-      setStepProgress(currentStepProgress);
-      setTotalProgress(scaledProgress);
+      animId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, [isPaused]);
 
   return (
     <section className="features-section gravitational-experience" id="features" ref={sectionRef}>
@@ -109,7 +128,7 @@ export const FeaturesSection: React.FC = () => {
                 <div 
                   key={cap.stepNumber} 
                   className={`timeline-track-node ${isActive ? 'active' : ''}`}
-                  onClick={() => setActiveStep(idx)}
+                  onClick={() => handleJumpToStep(idx)}
                   title={`Select ${cap.title}`}
                 >
                   <div className="track-marker-outer">
@@ -132,7 +151,11 @@ export const FeaturesSection: React.FC = () => {
           </div>
 
           {/* 3. Center-Right Editorial Capability Stack */}
-          <div className="gravitational-editorial-stack">
+          <div 
+            className="gravitational-editorial-stack"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
             {capabilities.map((cap, idx) => {
               const Icon = cap.icon;
               const isActive = activeStep === idx;
@@ -141,7 +164,7 @@ export const FeaturesSection: React.FC = () => {
                 <div 
                   key={cap.stepNumber} 
                   className={`gravitational-capability-row ${isActive ? 'active' : 'dormant'}`}
-                  onClick={() => setActiveStep(idx)}
+                  onClick={() => handleJumpToStep(idx)}
                 >
                   <div className="cap-header-row">
                     <span className="cap-badge">{cap.badge}</span>
@@ -185,7 +208,7 @@ export const FeaturesSection: React.FC = () => {
                 <div 
                   key={cap.stepNumber}
                   className={`bottom-step-pill ${isActive ? 'active' : ''}`}
-                  onClick={() => setActiveStep(idx)}
+                  onClick={() => handleJumpToStep(idx)}
                 >
                   <span className="step-num-code">{cap.stepNumber}</span>
                   <span className="step-label-code">{cap.label}</span>

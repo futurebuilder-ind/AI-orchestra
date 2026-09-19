@@ -1,82 +1,43 @@
 import React, { useEffect, useRef } from 'react';
 
 interface Particle {
+  type: 'accretion' | 'jet' | 'spiral' | 'beacon';
   angle: number;
   radius: number;
+  baseRadius: number;
   angularSpeed: number;
   radialSpeed: number;
-  baseRadius: number;
   size: number;
   alpha: number;
+  baseAlpha: number;
   color: [number, number, number];
-  isPhoton: boolean;
+  targetColor: [number, number, number];
   tilt: number;
   z: number;
-  burstProgress: number;
-  burstTargetX: number;
-  burstTargetY: number;
-}
-
-interface Point2D {
-  x: number;
-  y: number;
+  vz: number;
+  pulsePhase: number;
 }
 
 interface GravitationalBlackHoleEngineProps {
   activeStep: number;        // 0, 1, 2, 3
   stepProgress: number;      // 0.0 to 1.0 within active step
-  totalProgress: number;     // 0.0 to 3.0 across whole section
+  totalProgress: number;     // 0.0 to 4.0 across whole sequence
 }
 
-// Sample point-field targets from offscreen rendered text
-const sampleTitleTargets = (text: string, count: number, canvasWidth: number): Point2D[] => {
-  const offscreen = document.createElement('canvas');
-  const w = (offscreen.width = 640);
-  const h = (offscreen.height = 120);
-  const ctx = offscreen.getContext('2d');
-  if (!ctx) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '600 38px "Geist", "Inter", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, w / 2, h / 2);
-
-  const imgData = ctx.getImageData(0, 0, w, h);
-  const points: Point2D[] = [];
-  const step = Math.max(1, Math.floor(Math.sqrt((w * h) / (count * 10))));
-
-  for (let y = 0; y < h; y += step) {
-    for (let x = 0; x < w; x += step) {
-      const idx = (y * w + x) * 4;
-      if (imgData.data[idx + 3] > 128) {
-        const scale = Math.min(canvasWidth, 680) / 720;
-        points.push({
-          x: (x - w / 2) * scale,
-          y: (y - h / 2) * scale
-        });
-      }
-    }
-  }
-
-  if (points.length === 0) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
-
-  const targets: Point2D[] = [];
-  for (let i = 0; i < count; i++) {
-    const pt = points[i % points.length];
-    targets.push({
-      x: pt.x + (Math.random() - 0.5) * 3,
-      y: pt.y + (Math.random() - 0.5) * 3
-    });
-  }
-  return targets;
-};
-
-const STEP_TITLES = [
-  'MULTI-AGENT REASONING',
-  'MODEL COMPARISON & CONSENSUS',
-  'FILE & CONTEXT INTELLIGENCE',
-  'HYBRID CLOUD & LOCAL ENGINE'
+// Color Palettes corresponding to each Capability Step:
+// 0: COUNCIL (Cyan & Electric Blue)
+// 1: SYNTHESIS (Solar Gold & Amber)
+// 2: CONTEXT (Emerald Aurora & Teal)
+// 3: HYBRID (Royal Violet & Magenta)
+const STEP_PALETTES: [number, number, number][][] = [
+  // 0: Council
+  [[56, 189, 248], [14, 165, 233], [96, 165, 250], [255, 255, 255], [186, 230, 253]],
+  // 1: Synthesis
+  [[251, 191, 36], [245, 158, 11], [254, 243, 199], [255, 255, 255], [217, 119, 6]],
+  // 2: Context
+  [[16, 185, 129], [52, 211, 153], [45, 212, 191], [255, 255, 255], [110, 231, 183]],
+  // 3: Hybrid
+  [[168, 85, 247], [192, 132, 252], [236, 72, 153], [255, 255, 255], [244, 63, 94]]
 ];
 
 export const GravitationalBlackHoleEngine: React.FC<GravitationalBlackHoleEngineProps> = ({
@@ -86,24 +47,29 @@ export const GravitationalBlackHoleEngine: React.FC<GravitationalBlackHoleEngine
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Use ref to bridge continuous animation loop with changing props without rebuilding particle pool
+  const propsRef = useRef({ activeStep, stepProgress, totalProgress });
+  useEffect(() => {
+    propsRef.current = { activeStep, stepProgress, totalProgress };
+  }, [activeStep, stepProgress, totalProgress]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animId: number;
     const isMobile = window.innerWidth < 768;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 560);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || 560);
+    let width = (canvas.width = canvas.parentElement?.clientWidth || 580);
+    let height = (canvas.height = canvas.parentElement?.clientHeight || 580);
 
     const handleResize = () => {
       if (!canvas || !canvas.parentElement) return;
       width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight || 560;
-      updateTextTargets();
+      height = canvas.height = canvas.parentElement.clientHeight || 580;
     };
     window.addEventListener('resize', handleResize);
 
@@ -122,241 +88,313 @@ export const GravitationalBlackHoleEngine: React.FC<GravitationalBlackHoleEngine
       window.addEventListener('mousemove', handleMouseMove);
     }
 
-    // Text Target Maps
-    let titleTargetMap: Record<number, Point2D[]> = {};
-    const particleCount = isMobile ? 320 : 680;
+    // High Density Astra 6 Particle Pool
+    const particleCount = isMobile ? 550 : 1350;
+    const particles: Particle[] = [];
 
-    const updateTextTargets = () => {
-      titleTargetMap = {
-        0: sampleTitleTargets(STEP_TITLES[0], particleCount, width),
-        1: sampleTitleTargets(STEP_TITLES[1], particleCount, width),
-        2: sampleTitleTargets(STEP_TITLES[2], particleCount, width),
-        3: sampleTitleTargets(STEP_TITLES[3], particleCount, width)
-      };
-    };
-    updateTextTargets();
+    const getPalette = (step: number) => STEP_PALETTES[step % STEP_PALETTES.length];
 
-    // Palettes matching reference image:
-    // Gold/Amber accretion disc + Cyan/Electric blue spiral arm + Violet accents + Photon white
-    const amberColors: [number, number, number][] = [
-      [254, 243, 199], [251, 191, 36], [245, 158, 11], [217, 119, 6], [255, 255, 255]
-    ];
-    const cyanColors: [number, number, number][] = [
-      [207, 250, 254], [6, 182, 212], [56, 189, 248], [59, 130, 246], [255, 255, 255]
-    ];
-    const violetColors: [number, number, number][] = [
-      [233, 213, 255], [192, 132, 252], [168, 85, 247], [147, 51, 234], [255, 255, 255]
-    ];
+    for (let i = 0; i < particleCount; i++) {
+      let type: Particle['type'] = 'accretion';
+      if (i < particleCount * 0.55) {
+        type = 'accretion';
+      } else if (i < particleCount * 0.78) {
+        type = 'spiral';
+      } else if (i < particleCount * 0.95) {
+        type = 'jet';
+      } else {
+        type = 'beacon';
+      }
 
-    // Initialize Persistent Particle Pool
-    const particles: Particle[] = Array.from({ length: particleCount }, (_, i) => {
-      const isPhoton = Math.random() < 0.12;
-      const paletteChoice = i % 3 === 0 ? cyanColors : i % 3 === 1 ? amberColors : violetColors;
-      const color = paletteChoice[Math.floor(Math.random() * paletteChoice.length)];
-      const baseRadius = 45 + Math.random() * 190;
+      const initialPalette = getPalette(propsRef.current.activeStep);
+      const color = initialPalette[Math.floor(Math.random() * initialPalette.length)];
+      let baseRadius = 48 + Math.random() * 210;
+      let size = Math.random() * 1.6 + 0.6;
+      let alpha = Math.random() * 0.6 + 0.3;
 
-      return {
+      if (type === 'beacon') {
+        size = Math.random() * 3.2 + 2.2;
+        alpha = Math.random() * 0.4 + 0.6;
+        baseRadius = 70 + Math.random() * 190;
+      } else if (type === 'jet') {
+        size = Math.random() * 1.4 + 0.5;
+        alpha = Math.random() * 0.5 + 0.25;
+        baseRadius = 25 + Math.random() * 65;
+      } else if (type === 'spiral') {
+        baseRadius = 110 + Math.random() * 240;
+      }
+
+      particles.push({
+        type,
         angle: Math.random() * Math.PI * 2,
         radius: baseRadius,
         baseRadius,
-        angularSpeed: (0.012 + Math.random() * 0.02) * (Math.random() < 0.2 ? -1 : 1),
-        radialSpeed: 0.2 + Math.random() * 0.4,
-        size: isPhoton ? Math.random() * 2.8 + 1.2 : Math.random() * 1.5 + 0.6,
-        alpha: isPhoton ? Math.random() * 0.4 + 0.6 : Math.random() * 0.5 + 0.2,
-        color,
-        isPhoton,
-        tilt: -0.32 + (Math.random() - 0.5) * 0.15,
-        z: (Math.random() - 0.5) * 120,
-        burstProgress: 0,
-        burstTargetX: 0,
-        burstTargetY: 0
-      };
-    });
+        angularSpeed: (0.012 + Math.random() * 0.022) * (Math.random() < 0.15 ? -1 : 1),
+        radialSpeed: 0.18 + Math.random() * 0.38,
+        size,
+        alpha,
+        baseAlpha: alpha,
+        color: [...color],
+        targetColor: [...color],
+        tilt: -0.32 + (Math.random() - 0.5) * 0.18,
+        z: (Math.random() - 0.5) * 140,
+        vz: (Math.random() - 0.5) * 1.8,
+        pulsePhase: Math.random() * Math.PI * 2
+      });
+    }
 
     let time = 0;
+    let lastStep = propsRef.current.activeStep;
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
       time += 0.016;
 
-      // Mouse Lerp
-      mouseX += (targetMouseX - mouseX) * 0.04;
-      mouseY += (targetMouseY - mouseY) * 0.04;
+      const { activeStep: currStep } = propsRef.current;
+
+      // When step changes, assign new target colors for smooth morphing
+      if (currStep !== lastStep) {
+        lastStep = currStep;
+        const newPalette = getPalette(currStep);
+        particles.forEach(p => {
+          const col = newPalette[Math.floor(Math.random() * newPalette.length)];
+          p.targetColor = col;
+        });
+      }
+
+      // Smooth mouse lerp with spring physics
+      mouseX += (targetMouseX - mouseX) * 0.05;
+      mouseY += (targetMouseY - mouseY) * 0.05;
 
       const centerX = width * 0.48;
       const centerY = height * 0.48;
 
-      const mouseOffsetX = (mouseX - width / 2) * 0.04;
-      const mouseOffsetY = (mouseY - height / 2) * 0.04;
+      const mouseOffsetX = (mouseX - width / 2) * 0.05;
+      const mouseOffsetY = (mouseY - height / 2) * 0.05;
 
-      // Determine Particle Typography Formation Window
-      // At peak of stepProgress (0.45 to 0.82), particles form the title
-      let typographyWeight = 0;
-      if (stepProgress >= 0.42 && stepProgress <= 0.88) {
-        const peakRange = 0.88 - 0.42;
-        const norm = (stepProgress - 0.42) / peakRange;
-        typographyWeight = Math.sin(norm * Math.PI); // Smooth in and out
-      }
-      const targets = titleTargetMap[activeStep] || [];
+      // Dynamic Event Horizon Radius with rhythmic breathing
+      const eventHorizonRadius = 42 + Math.sin(time * 2.2) * 2.5;
+      const diskTilt = -0.32 + mouseOffsetY * 0.003;
 
-      // Accretion Disc Pulsing Radius
-      const eventHorizonRadius = 42 + Math.sin(time * 2) * 2;
-      const discTilt = -0.34 + mouseOffsetY * 0.003;
+      // Color theme interpolation
+      const currentPalette = getPalette(currStep);
+      const [cr, cg, cb] = currentPalette[0];
 
-      // --- 1. RENDER GRAVITATIONAL LENSING AURA & EVENT HORIZON ---
+      // --- 1. DEEP SPACE GRAVITATIONAL LENSING & SINGULARITY CORE ---
       ctx.save();
       ctx.translate(centerX + mouseOffsetX, centerY + mouseOffsetY);
 
-      // Deep Space Gravitational Glow
-      const lensingGlow = ctx.createRadialGradient(0, 0, eventHorizonRadius * 0.8, 0, 0, 220);
-      lensingGlow.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
-      lensingGlow.addColorStop(0.24, 'rgba(251, 191, 36, 0.28)');
-      lensingGlow.addColorStop(0.48, 'rgba(56, 189, 248, 0.14)');
-      lensingGlow.addColorStop(0.72, 'rgba(168, 85, 247, 0.06)');
-      lensingGlow.addColorStop(1, 'transparent');
+      // Multi-spectral Relativistic Lensing Glow
+      const lensingAura = ctx.createRadialGradient(0, 0, eventHorizonRadius * 0.6, 0, 0, 240);
+      lensingAura.addColorStop(0, 'rgba(0, 0, 0, 0.98)');
+      lensingAura.addColorStop(0.2, `rgba(${cr}, ${cg}, ${cb}, 0.32)`);
+      lensingAura.addColorStop(0.45, `rgba(${currentPalette[1][0]}, ${currentPalette[1][1]}, ${currentPalette[1][2]}, 0.16)`);
+      lensingAura.addColorStop(0.72, 'rgba(56, 189, 248, 0.06)');
+      lensingAura.addColorStop(1, 'transparent');
 
-      ctx.fillStyle = lensingGlow;
+      ctx.fillStyle = lensingAura;
       ctx.beginPath();
-      ctx.arc(0, 0, 230, 0, Math.PI * 2);
+      ctx.arc(0, 0, 250, 0, Math.PI * 2);
       ctx.fill();
 
-      // Relativistic Lensing Arcs (Accretion Rings)
+      // Dual Intersecting Elliptical Orbital Trajectory Guides (Astra Reference Mockup)
       ctx.save();
-      ctx.rotate(discTilt);
+      ctx.rotate(diskTilt);
 
-      // Golden Accretion Ring 1
+      // Inner Accretion Golden Trace Ring
       ctx.beginPath();
-      ctx.ellipse(0, 0, 150, 48, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
-      ctx.lineWidth = 1.4;
-      ctx.shadowColor = 'rgba(251, 191, 36, 0.8)';
-      ctx.shadowBlur = 14;
+      ctx.ellipse(0, 0, 155, 52, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, 0.55)`;
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = `rgba(${cr}, ${cg}, ${cb}, 0.85)`;
+      ctx.shadowBlur = 16;
       ctx.stroke();
 
-      // Cyan Accretion Ring 2
+      // Outer Tilted Cyan Guide Trajectory
       ctx.beginPath();
-      ctx.ellipse(0, 0, 190, 62, 0.12, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.ellipse(0, 0, 205, 68, 0.16, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
       ctx.lineWidth = 1.2;
-      ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.75)';
       ctx.shadowBlur = 12;
       ctx.stroke();
 
-      // Outer Filament Ring 3
+      // Outer Dashed Trajectory Ring
       ctx.beginPath();
-      ctx.ellipse(0, 0, 230, 78, -0.08, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(192, 132, 252, 0.25)';
-      ctx.lineWidth = 0.9;
+      ctx.ellipse(0, 0, 245, 84, -0.09, 0, Math.PI * 2);
+      ctx.setLineDash([4, 10]);
+      ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
+      ctx.lineWidth = 1;
       ctx.shadowBlur = 0;
       ctx.stroke();
+      ctx.setLineDash([]);
       ctx.restore();
 
-      // Pure Black Event Horizon Core
+      // Black Hole Singularity Core (Absolute Event Horizon)
       ctx.beginPath();
       ctx.arc(0, 0, eventHorizonRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#020204';
-      ctx.shadowColor = 'rgba(251, 191, 36, 0.9)';
-      ctx.shadowBlur = 22;
+      ctx.fillStyle = '#010103';
+      ctx.shadowColor = `rgba(${cr}, ${cg}, ${cb}, 0.95)`;
+      ctx.shadowBlur = 24;
       ctx.fill();
 
-      // Sharp Photon Ring Boundary
+      // Sharp Photon Sphere Ring Boundary
       ctx.beginPath();
       ctx.arc(0, 0, eventHorizonRadius + 1.2, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
       ctx.lineWidth = 1.6;
       ctx.stroke();
 
+      // Prominent Orbiting ACTIVE Beacon (As seen in Astra screenshot)
+      const beaconAngle = time * 0.85;
+      const beaconRx = 155;
+      const beaconRy = 52;
+      const beaconX = Math.cos(beaconAngle) * beaconRx;
+      const beaconY = Math.sin(beaconAngle) * beaconRy;
+
+      // Rotate with accretion tilt
+      const bRotCos = Math.cos(diskTilt);
+      const bRotSin = Math.sin(diskTilt);
+      const beaconFinalX = beaconX * bRotCos - beaconY * bRotSin;
+      const beaconFinalY = beaconX * bRotSin + beaconY * bRotCos;
+
+      // Glow Halo
+      const beaconGlow = ctx.createRadialGradient(beaconFinalX, beaconFinalY, 0, beaconFinalX, beaconFinalY, 18);
+      beaconGlow.addColorStop(0, 'rgba(251, 191, 36, 0.95)');
+      beaconGlow.addColorStop(0.4, 'rgba(245, 158, 11, 0.4)');
+      beaconGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = beaconGlow;
+      ctx.beginPath();
+      ctx.arc(beaconFinalX, beaconFinalY, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Solid Core
+      ctx.beginPath();
+      ctx.arc(beaconFinalX, beaconFinalY, 3.8, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+
+      // "ACTIVE" Tag above beacon when on the front side of orbit
+      if (Math.sin(beaconAngle) > -0.2) {
+        ctx.font = '600 8px var(--font-mono, monospace)';
+        ctx.fillStyle = '#fbbf24';
+        ctx.textAlign = 'center';
+        ctx.fillText('ACTIVE', beaconFinalX, beaconFinalY - 10);
+      }
+
       ctx.restore();
 
-      // --- 2. VERTICAL GRAVITATIONAL FILAMENTS STREAMING BETWEEN NODES ---
+      // --- 2. RELATIVISTIC POLAR STREAM FILAMENT ---
       ctx.save();
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.16)';
       ctx.lineWidth = 1;
-      ctx.setLineDash([4, 8]);
+      ctx.setLineDash([3, 7]);
       ctx.beginPath();
-      ctx.moveTo(centerX, 20);
-      ctx.bezierCurveTo(centerX + 30, height * 0.25, centerX - 30, height * 0.75, centerX, height - 20);
+      ctx.moveTo(centerX + mouseOffsetX, 24);
+      ctx.bezierCurveTo(
+        centerX + mouseOffsetX + 36, height * 0.28,
+        centerX + mouseOffsetX - 36, height * 0.72,
+        centerX + mouseOffsetX, height - 24
+      );
       ctx.stroke();
       ctx.restore();
 
-      // --- 3. PARTICLES PHYSICS & TYPOGRAPHY FORMATION ---
-      particles.forEach((p, idx) => {
+      // --- 3. HIGH-PERFORMANCE ASTRA 6 PARTICLE DYNAMICS ---
+      particles.forEach(p => {
         if (!reduceMotion) {
-          // Gravitational angular acceleration near event horizon
-          const proximity = Math.max(0.2, (p.radius - eventHorizonRadius) / 160);
-          const currentAngularSpeed = p.angularSpeed * (1.6 / proximity);
+          // Color Lerping towards target step palette
+          p.color[0] += (p.targetColor[0] - p.color[0]) * 0.04;
+          p.color[1] += (p.targetColor[1] - p.color[1]) * 0.04;
+          p.color[2] += (p.targetColor[2] - p.color[2]) * 0.04;
+
+          p.pulsePhase += 0.03;
+
+          // Keplerian velocity: inner particles orbit faster than outer particles
+          const proximity = Math.max(0.18, (p.radius - eventHorizonRadius) / 180);
+          const currentAngularSpeed = p.angularSpeed * (1.8 / proximity);
           p.angle += currentAngularSpeed;
 
-          // Inward spiral attraction
-          p.radius -= p.radialSpeed * 0.4;
-          if (p.radius < eventHorizonRadius) {
-            // Relativistic slingshot re-emission into outer accretion belt
-            p.radius = p.baseRadius + (Math.random() - 0.5) * 20;
+          if (p.type === 'jet') {
+            // Relativistic jet: particles stream outward along Z axis (polar)
+            p.z += p.vz * 1.5;
+            p.radius += 0.15;
+            if (Math.abs(p.z) > 160) {
+              p.z = (Math.random() - 0.5) * 20;
+              p.radius = 28 + Math.random() * 45;
+            }
+          } else {
+            // Accretion spiral pull
+            p.radius -= p.radialSpeed * 0.32;
+            if (p.radius < eventHorizonRadius) {
+              p.radius = p.baseRadius + (Math.random() - 0.5) * 30;
+            }
           }
         }
 
-        // Elliptical coordinate calculation with accretion tilt
+        // 3D Elliptical Projection
         const cosA = Math.cos(p.angle);
         const sinA = Math.sin(p.angle);
-        const rx = p.radius * 1.25;
+        const rx = p.radius * 1.28;
         const ry = p.radius * 0.42;
 
-        // Rotating with accretion tilt
         const rotCos = Math.cos(p.tilt + mouseOffsetY * 0.002);
         const rotSin = Math.sin(p.tilt + mouseOffsetY * 0.002);
 
         const px = cosA * rx;
         const py = sinA * ry;
 
-        const orbitalX = centerX + mouseOffsetX + (px * rotCos - py * rotSin);
-        const orbitalY = centerY + mouseOffsetY + (px * rotSin + py * rotCos);
+        const posX = centerX + mouseOffsetX + (px * rotCos - py * rotSin);
+        const posY = centerY + mouseOffsetY + (px * rotSin + py * rotCos) + (p.type === 'jet' ? p.z * 0.45 : 0);
 
-        let finalX = orbitalX;
-        let finalY = orbitalY;
-
-        // Form Title Typography when typographyWeight > 0
-        if (typographyWeight > 0.02 && targets.length > 0) {
-          const target = targets[idx % targets.length];
-          const textX = centerX + target.x;
-          const textY = centerY + 160 + target.y; // Position title below black hole
-          const ease = Math.pow(typographyWeight, 1.6);
-          finalX = orbitalX * (1 - ease) + textX * ease;
-          finalY = orbitalY * (1 - ease) + textY * ease;
-        }
-
-        // Depth & Twinkle
+        // Relativistic Beaming & Depth Shading
         const depth = Math.sin(p.angle);
-        const alphaFactor = depth > 0 ? 1.0 : 0.45; // Relativistic beaming
-        const [r, g, b] = p.color;
+        const alphaFactor = depth > 0 ? 1.0 : 0.38; // Approaching side glows intensely
+        const pulse = 0.85 + Math.sin(p.pulsePhase) * 0.15;
 
-        // Render Photon Glow Aura
-        if (p.isPhoton) {
+        const r = Math.round(p.color[0]);
+        const g = Math.round(p.color[1]);
+        const b = Math.round(p.color[2]);
+
+        // Render Beacon / Constellation Nodes
+        if (p.type === 'beacon') {
+          // Outer Glow
           ctx.beginPath();
-          ctx.arc(finalX, finalY, p.size * 3.4, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.18 * alphaFactor})`;
+          ctx.arc(posX, posY, p.size * 3.6, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * 0.16 * alphaFactor * pulse})`;
+          ctx.fill();
+
+          // Core
+          ctx.beginPath();
+          ctx.arc(posX, posY, p.size * pulse, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * alphaFactor})`;
+          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        } else {
+          // Standard Micro-Stardust & Accretion Points
+          ctx.beginPath();
+          ctx.arc(posX, posY, Math.max(0.4, p.size), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * alphaFactor * pulse})`;
           ctx.fill();
         }
-
-        // Render Core Particle Point
-        ctx.beginPath();
-        ctx.arc(finalX, finalY, Math.max(0.5, p.size), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.alpha * alphaFactor})`;
-        ctx.fill();
       });
 
-      animationFrameId = requestAnimationFrame(render);
+      animId = requestAnimationFrame(render);
     };
 
-    render();
+    animId = requestAnimationFrame(render);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (!isMobile) {
         window.removeEventListener('mousemove', handleMouseMove);
       }
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animId);
     };
-  }, [activeStep, stepProgress, totalProgress]);
+  }, []); // Run once persistently so particle physics run without interruption
 
   return (
     <div className="gravitational-engine-wrapper" style={{ width: '100%', height: '100%', position: 'relative' }}>
