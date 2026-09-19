@@ -43,6 +43,90 @@ export const InputArea: React.FC<InputAreaProps> = ({
   const [showModePopover, setShowModePopover] = useState(false);
   const [showModelPopover, setShowModelPopover] = useState(false);
 
+  // Native Web Speech API Voice Prompt Dictation
+  const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+      }
+    };
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechError('Speech recognition not supported in this browser.');
+      setTimeout(() => setSpeechError(null), 4000);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = typeof navigator !== 'undefined' ? navigator.language || 'en-US' : 'en-US';
+
+      let initialQuery = query;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setSpeechError(null);
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript) {
+          const separator = initialQuery.trim() ? ' ' : '';
+          onChangeQuery(initialQuery + separator + transcript.trim());
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('[Voice Input] Speech recognition event:', event.error);
+        if (event.error === 'not-allowed') {
+          setSpeechError('Microphone access denied.');
+        } else if (event.error === 'no-speech') {
+          // Normal silence timeout
+        } else {
+          setSpeechError(`Voice input: ${event.error}`);
+        }
+        setIsListening(false);
+        setTimeout(() => setSpeechError(null), 4000);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.error('Speech recognition error:', err);
+      setSpeechError('Microphone initialization failed.');
+      setIsListening(false);
+      setTimeout(() => setSpeechError(null), 4000);
+    }
+  };
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -290,11 +374,35 @@ export const InputArea: React.FC<InputAreaProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Audio Wave Button */}
-            <button className="audio-wave-btn" title="Voice Input" aria-label="Voice Input">
-              <Mic size={15} />
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+            {/* Native Microphone Dictation Button */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                type="button"
+                className={`audio-wave-btn ${isListening ? 'listening' : ''}`}
+                onClick={toggleListening}
+                title={isListening ? "Listening... (Click to stop dictation)" : "Voice Prompt (Dictate speech)"}
+                aria-label={isListening ? "Stop listening" : "Voice Prompt"}
+              >
+                <Mic size={15} className={isListening ? 'mic-active-icon' : ''} />
+                {isListening && <span className="listening-pulse-ring" />}
+              </button>
+
+              {/* Listening Indicator Badge */}
+              {isListening && (
+                <div className="listening-badge-pill">
+                  <span className="live-rec-dot" />
+                  <span>Listening...</span>
+                </div>
+              )}
+
+              {/* Voice Error Tooltip */}
+              {speechError && (
+                <div className="voice-error-toast">
+                  {speechError}
+                </div>
+              )}
+            </div>
 
             {/* Solid Blue Send Button */}
             <button

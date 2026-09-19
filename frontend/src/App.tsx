@@ -347,6 +347,7 @@ export default function App() {
   };
 
   // Execute Orchestration Request
+  // Execute Orchestration Request (Supports Real-Time SSE Streaming)
   const handleRun = async (customQuery?: string) => {
     const targetQuery = customQuery || query;
     if (!targetQuery.trim()) return;
@@ -361,6 +362,31 @@ export default function App() {
     setRunning(true);
     const startTimeMs = Date.now();
 
+    // Optimistically insert user query and streaming assistant placeholder
+    const tempUserMsgId = `temp-user-${Date.now()}`;
+    const tempAssistantMsgId = `temp-assist-${Date.now()}`;
+    setMessages(prev => [
+      ...prev,
+      {
+        id: tempUserMsgId,
+        role: 'user',
+        content: targetQuery,
+        timestamp: Date.now()
+      },
+      {
+        id: tempAssistantMsgId,
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now()
+      }
+    ]);
+
+    const activeQuery = targetQuery;
+    const activeFileContext = fileContext;
+    setQuery('');
+    setAttachedFile(null);
+    setFileContext('');
+
     pushToast(modelsToUse[0] || 'AI Agent', `Task Analysis initiated (${councilMode.toUpperCase()} Mode)`, 'active');
 
     setRunStepLogs([
@@ -370,21 +396,21 @@ export default function App() {
       { step: 'synthesizing', status: 'pending', message: 'Pending consensus synthesis...' }
     ]);
 
-    setTimeout(() => {
-      pushToast('Council Pool', 'Agent roles assigned & dispatched', 'active');
-    }, 1000);
-
     try {
       const res = await fetch(`${API_BASE}/orchestrate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
         body: JSON.stringify({
           conversationId: activeConvoId || undefined,
-          message: targetQuery,
-          query: targetQuery,
+          message: activeQuery,
+          query: activeQuery,
           mode: councilMode,
           agentCount,
-          fileContext: fileContext,
+          fileContext: activeFileContext,
+          stream: true,
           config: {
             ollamaUrl,
             geminiApiKey,
@@ -399,44 +425,126 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'All configured AI providers are temporarily unavailable.');
+        let errMsg = 'All configured AI providers are temporarily unavailable.';
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      const data = await res.json();
-      const elapsedSec = parseFloat(((Date.now() - startTimeMs) / 1000).toFixed(2));
+      const isSse = res.headers.get('content-type')?.includes('text/event-stream') && res.body;
 
-      setRunStepLogs(data.stepLogs || []);
-      pushToast('Executive Synthesizer', `Council consensus synthesized in ${elapsedSec}s`, 'success');
+      if (isSse && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let streamedAnswer = '';
+        let finalData: any = null;
 
-      const newRun: RunItem = {
-        id: `RUN-${Math.floor(1000 + Math.random() * 9000)}`,
-        timestamp: Date.now(),
-        query: targetQuery,
-        status: 'Completed',
-        durationSec: elapsedSec,
-        modelsCount: data.modelsUsed?.length || modelsToUse.length || 1,
-        verificationPasses: 2,
-        tokens: Math.floor(2000 + Math.random() * 8000)
-      };
-      setRunsHistory(prev => [newRun, ...prev]);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      if (!activeConvoId) {
-        setActiveConvoId(data.conversationId);
-        fetchConversations();
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            if (!part.trim()) continue;
+            const eventMatch = part.match(/^event:\s*(\w+)/m);
+            const dataMatch = part.match(/^data:\s*([\s\S]+)$/m);
+            const eventType = eventMatch ? eventMatch[1] : 'message';
+            if (!dataMatch) continue;
+
+            try {
+              const data = JSON.parse(dataMatch[1].trim());
+
+              if (eventType === 'stepLog') {
+                setRunStepLogs(prev => {
+                  const idx = prev.findIndex(p => p.step === data.step);
+                  if (idx >= 0) {
+                    const next = [...prev];
+                    next[idx] = data;
+                    return next;
+                  }
+                  return [...prev, data];
+                });
+              } else if (eventType === 'token') {
+                streamedAnswer += (data.chunk || '');
+                setMessages(prev => prev.map(m => m.id === tempAssistantMsgId ? { ...m, content: streamedAnswer } : m));
+              } else if (eventType === 'result') {
+                finalData = data;
+              } else if (eventType === 'error') {
+                throw new Error(data.error || 'Execution failed');
+              }
+            } catch (e: any) {
+              if (e.message && eventType === 'error') throw e;
+            }
+          }
+        }
+
+        const elapsedSec = parseFloat(((Date.now() - startTimeMs) / 1000).toFixed(2));
+        if (finalData) {
+          setRunStepLogs(finalData.stepLogs || []);
+          pushToast('Executive Synthesizer', `Council consensus synthesized in ${elapsedSec}s`, 'success');
+
+          const newRun: RunItem = {
+            id: `RUN-${Math.floor(1000 + Math.random() * 9000)}`,
+            timestamp: Date.now(),
+            query: activeQuery,
+            status: 'Completed',
+            durationSec: elapsedSec,
+            modelsCount: finalData.modelsUsed?.length || modelsToUse.length || 1,
+            verificationPasses: 2,
+            tokens: Math.floor(2000 + Math.random() * 8000)
+          };
+          setRunsHistory(prev => [newRun, ...prev]);
+
+          if (finalData.conversationId) {
+            if (!activeConvoId) {
+              setActiveConvoId(finalData.conversationId);
+              fetchConversations();
+            } else {
+              loadMessages(activeConvoId);
+            }
+          }
+        }
       } else {
-        loadMessages(activeConvoId);
-      }
+        // Fallback for standard JSON response
+        const data = await res.json();
+        const elapsedSec = parseFloat(((Date.now() - startTimeMs) / 1000).toFixed(2));
 
-      setQuery('');
-      setAttachedFile(null);
-      setFileContext('');
+        setRunStepLogs(data.stepLogs || []);
+        pushToast('Executive Synthesizer', `Council consensus synthesized in ${elapsedSec}s`, 'success');
+
+        const newRun: RunItem = {
+          id: `RUN-${Math.floor(1000 + Math.random() * 9000)}`,
+          timestamp: Date.now(),
+          query: activeQuery,
+          status: 'Completed',
+          durationSec: elapsedSec,
+          modelsCount: data.modelsUsed?.length || modelsToUse.length || 1,
+          verificationPasses: 2,
+          tokens: Math.floor(2000 + Math.random() * 8000)
+        };
+        setRunsHistory(prev => [newRun, ...prev]);
+
+        if (!activeConvoId) {
+          setActiveConvoId(data.conversationId);
+          fetchConversations();
+        } else {
+          loadMessages(activeConvoId);
+        }
+      }
     } catch (err: any) {
       alert(err.message || 'All configured AI providers are temporarily unavailable.');
       pushToast('Orchestrator', `Execution failed: ${err.message}`, 'failed');
       setRunStepLogs(prev =>
         prev.map(step => step.status === 'running' ? { ...step, status: 'failed', message: err.message } : step)
       );
+      // Remove empty assistant placeholder if failed
+      setMessages(prev => prev.filter(m => m.id !== tempAssistantMsgId || m.content.trim().length > 0));
     } finally {
       setRunning(false);
     }
@@ -473,7 +581,7 @@ export default function App() {
   return (
     <div className={`app-container density-${density} bg-motion-${effectsConfig.backgroundMotion}`}>
       {/* PROCEDURAL COSMIC BACKGROUND */}
-      <CosmicBackground effects={effectsConfig} />
+      {!workspaceMode && <CosmicBackground effects={effectsConfig} />}
 
       {/* AGENT TOAST NOTIFICATIONS */}
       <AgentToastContainer
@@ -627,92 +735,98 @@ export default function App() {
       ) : (
         /* TECHNICAL COMMAND CENTER WORKSPACE */
         <>
-          {/* MOBILE SIDEBAR BACKDROP OVERLAY */}
-          {mobileSidebarOpen && (
-            <div 
-              className="sidebar-backdrop" 
-              onClick={() => setMobileSidebarOpen(false)}
+          {/* DESKTOP SIDEBAR NAVIGATION */}
+          <div className="desktop-sidebar-wrapper">
+            <Sidebar
+              conversations={conversations}
+              activeConvoId={activeConvoId}
+              activeTab={activeTab}
+              ollamaRunning={ollamaRunning}
+              activeModelName={activeModelDisplay}
+              isOpen={false}
+              isClosed={!sidebarOpen}
+              onSelectConvo={(id) => {
+                setActiveConvoId(id);
+                setActiveTab('orchestra');
+                setWorkspaceMode(true);
+              }}
+              onStartNewChat={() => {
+                startNewChat();
+                setWorkspaceMode(true);
+              }}
+              onDeleteConvo={deleteConvo}
+              onSelectTab={(tab) => {
+                setActiveTab(tab);
+                setWorkspaceMode(true);
+              }}
+              onOpenCustomization={() => setIsCustomizationOpen(true)}
+              onGoToLanding={() => {
+                setWorkspaceMode(false);
+                setActiveConvoId(null);
+                setMessages([]);
+              }}
             />
-          )}
-
-          {/* SIDEBAR NAVIGATION */}
-          <Sidebar
-            conversations={conversations}
-            activeConvoId={activeConvoId}
-            activeTab={activeTab}
-            ollamaRunning={ollamaRunning}
-            activeModelName={activeModelDisplay}
-            isOpen={mobileSidebarOpen}
-            isClosed={!sidebarOpen}
-            onSelectConvo={(id) => {
-              setActiveConvoId(id);
-              setActiveTab('orchestra');
-              setWorkspaceMode(true);
-              setMobileSidebarOpen(false);
-            }}
-            onStartNewChat={() => {
-              startNewChat();
-              setWorkspaceMode(true);
-            }}
-            onDeleteConvo={deleteConvo}
-            onSelectTab={(tab) => {
-              setActiveTab(tab);
-              setWorkspaceMode(true);
-              setMobileSidebarOpen(false);
-            }}
-            onOpenCustomization={() => setIsCustomizationOpen(true)}
-            onGoToLanding={() => {
-              setWorkspaceMode(false);
-              setActiveConvoId(null);
-              setMessages([]);
-            }}
-          />
+          </div>
 
           {/* MAIN WORKSPACE */}
           <main className="main-workspace">
-            {/* TOP HEADER */}
-            <header className="main-header">
+            {/* TOP COMMAND BAR HEADER */}
+            <header className="main-header command-bar-header">
               <div className="header-left">
                 <button 
-                  className="action-btn mobile-menu-btn" 
+                  className="header-icon-btn mobile-menu-btn" 
                   onClick={() => {
-                    setSidebarOpen(!sidebarOpen);
-                    setMobileSidebarOpen(!mobileSidebarOpen);
+                    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+                      setMobileSidebarOpen(true);
+                    } else {
+                      setSidebarOpen(!sidebarOpen);
+                    }
                   }}
-                  title="Toggle Sidebar Menu"
-                  aria-label="Toggle Sidebar Menu"
+                  title="Toggle Sidebar"
+                  aria-label="Toggle Sidebar"
                 >
-                  <Menu size={14} style={{ color: 'var(--accent-color)' }} />
+                  <Menu size={14} />
                 </button>
-                <span className="header-title">
-                  {activeTab === 'orchestra' && (activeConvoId ? 'CHATS // SESSION LOG' : 'CHATS // NEW SESSION')}
-                  {activeTab === 'models' && 'WORKSPACE // MODELS'}
-                  {activeTab === 'runs' && 'WORKSPACE // RUNS HISTORY'}
-                  {activeTab === 'files' && 'WORKSPACE // DOCUMENTS'}
-                  {activeTab === 'settings' && 'SYSTEM // SETTINGS'}
-                  {activeTab === 'usage' && 'SYSTEM // USAGE METRICS'}
-                </span>
+
+                {/* Subtle Brand Tag when sidebar is closed or on mobile */}
+                <div className="header-brand-integrated" onClick={() => setWorkspaceMode(false)}>
+                  <AILogo size={18} showText={true} />
+                </div>
+
+                <div className="header-breadcrumbs">
+                  <span className="breadcrumb-slash">/</span>
+                  <span className="header-title">
+                    {activeTab === 'orchestra' && (activeConvoId ? 'CHATS // SESSION' : 'CHATS // NEW SESSION')}
+                    {activeTab === 'models' && 'MODELS // REGISTRY'}
+                    {activeTab === 'runs' && 'RUNS // TELEMETRY'}
+                    {activeTab === 'files' && 'DOCUMENTS // CONTEXT'}
+                    {activeTab === 'settings' && 'SYSTEM // CONFIG'}
+                    {activeTab === 'usage' && 'SYSTEM // METRICS'}
+                  </span>
+                </div>
               </div>
 
-              {/* SEARCH BAR IN HEADER */}
+              {/* FLOATING GLASS SEARCH BAR */}
               <div className="header-search-container">
-                <Search size={13} style={{ color: '#475569' }} />
+                <Search size={13} className="search-icon" />
                 <input 
                   type="text" 
-                  placeholder="Search sessions...  Ctrl F" 
+                  placeholder="Search sessions... (Ctrl F)" 
                   className="header-search-input"
                 />
+                <span className="search-shortcut-badge">⌘K</span>
               </div>
 
+              {/* INTEGRATED ACTION DOCK */}
               <div className="header-actions">
-                <button className="action-btn" onClick={() => setWorkspaceMode(false)}>
-                  <span>Landing Page ↗</span>
+                <button className="header-link-btn" onClick={() => setWorkspaceMode(false)}>
+                  <span>Landing Page</span>
+                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>↗</span>
                 </button>
-                <button className="action-btn" onClick={() => setIsCustomizationOpen(true)} aria-label="Customize Layout">
+                <button className="header-icon-btn" onClick={() => setIsCustomizationOpen(true)} title="Customize Layout" aria-label="Customize Layout">
                   <Sliders size={13} style={{ color: '#38bdf8' }} />
-                  <span>Customize Layout</span>
                 </button>
-                <div className="header-avatar-circle" title="User Profile">
+                <div className="header-avatar-circle" title="AI Orchestra Operator">
                   V
                 </div>
               </div>
@@ -777,8 +891,8 @@ export default function App() {
               <div className="workspace-body">
                 {messages.length === 0 && !running ? (
                   <div className="empty-workspace-view">
-                    {/* CORE ORBITAL STARBURST VISUALIZER & TELEMETRY */}
-                    <CommandCenterCoreVisualizer />
+                    {/* CORE ORBITAL STARBURST VISUALIZER & ACTIONS */}
+                    <CommandCenterCoreVisualizer onSelectPrompt={(p) => setQuery(p)} />
                   </div>
                 ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -978,6 +1092,54 @@ export default function App() {
             )}
           </main>
         </>
+      )}
+
+      {/* GLOBAL MOBILE MENU OVERLAY & DRAWER (Accessible from Landing Page & Workspace) */}
+      {mobileSidebarOpen && (
+        <div 
+          className="mobile-menu-overlay open" 
+          onClick={() => setMobileSidebarOpen(false)}
+        >
+          <aside className="mobile-menu-drawer-wrapper" onClick={(e) => e.stopPropagation()}>
+            <Sidebar
+              conversations={conversations}
+              activeConvoId={activeConvoId}
+              activeTab={activeTab}
+              ollamaRunning={ollamaRunning}
+              activeModelName={activeModelDisplay}
+              isOpen={true}
+              isClosed={false}
+              onSelectConvo={(id) => {
+                setActiveConvoId(id);
+                setActiveTab('orchestra');
+                setWorkspaceMode(true);
+                setMobileSidebarOpen(false);
+              }}
+              onStartNewChat={() => {
+                startNewChat();
+                setWorkspaceMode(true);
+                setMobileSidebarOpen(false);
+              }}
+              onDeleteConvo={deleteConvo}
+              onSelectTab={(tab) => {
+                setActiveTab(tab);
+                setWorkspaceMode(true);
+                setMobileSidebarOpen(false);
+              }}
+              onOpenCustomization={() => {
+                setIsCustomizationOpen(true);
+                setMobileSidebarOpen(false);
+              }}
+              onGoToLanding={() => {
+                setWorkspaceMode(false);
+                setActiveConvoId(null);
+                setMessages([]);
+                setMobileSidebarOpen(false);
+              }}
+              onClose={() => setMobileSidebarOpen(false)}
+            />
+          </aside>
+        </div>
       )}
     </div>
   );

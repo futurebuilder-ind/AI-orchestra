@@ -118,63 +118,110 @@ export const OrchestrationVisualizer: React.FC<OrchestrationVisualizerProps> = (
       {/* COLLAPSED SUMMARY BAR */}
       {isCollapsed ? (
         <div className="collapsed-orchestra-bar">
-          <span className="collapsed-pill">ORCHESTRATION ACTIVE</span>
-          <span className="collapsed-pill">✓ {agentPoolData.length} AGENT{agentPoolData.length === 1 ? '' : 'S'}</span>
-          {councilMode !== 'single' && <span className="collapsed-pill">✓ VERIFIED</span>}
-          <span className="collapsed-pill">✓ CONSENSUS SYNTHESIZED</span>
+          <span className="collapsed-pill">USER INGESTED</span>
+          <span className="collapsed-pill">ORCHESTRA CORE ACTIVE</span>
+          <span className="collapsed-pill">✓ {agentPoolData.length} MODEL AGENTS</span>
+          <span className="collapsed-pill">✓ SYNTHESIS</span>
+          <span className="collapsed-pill">✓ CONSENSUS READY</span>
         </div>
       ) : (
-        /* VERTICAL TIMELINE GRAPH FOR ALL SCREEN SIZES */
+        /* FLOWING MULTI-AGENT ORCHESTRATION PIPELINE */
         <div className="graph-container">
-          <div className="vertical-pipeline-timeline">
-            {/* NODE 1: TASK ROUTER */}
-            <div className={`vertical-timeline-node ${getNodeClass(analysisStatus)}`}>
-              <div className="vertical-node-dot">1</div>
+          <div className="vertical-pipeline-timeline flowing-orchestration-pipeline">
+            {/* STAGE 1: USER */}
+            <div className="vertical-timeline-node stage-user glow-active-steady">
+              <div className="vertical-node-dot">
+                <span className="dot-pulse-ring" />
+                <span className="dot-inner-core">U</span>
+              </div>
               <div className="vertical-node-content">
-                <div className="vertical-node-title">TASK ROUTING & ANALYSIS</div>
-                <div className="vertical-node-sub">{analysisStatus === 'completed' ? '✓ Task classified & route assigned' : analysisStatus === 'running' ? '● Analyzing query complexity...' : '○ Waiting...'}</div>
+                <div className="vertical-node-title">USER PROMPT INGESTION</div>
+                <div className="vertical-node-sub">✓ Request received & vectorized for orchestration</div>
               </div>
             </div>
 
-            <div className="vertical-timeline-line" />
+            {/* FLOWING CONNECTION PATH 1 */}
+            <div className="pipeline-flowing-path">
+              <div className="flowing-particle-beam cyan-beam" />
+            </div>
 
-            {/* NODE 2: PARALLEL AGENT COUNCIL */}
-            <div className={`vertical-timeline-node ${getNodeClass(parallelStatus)}`}>
-              <div className="vertical-node-dot">2</div>
+            {/* STAGE 2: ORCHESTRA CORE */}
+            <div className={`vertical-timeline-node stage-core ${getNodeClass(analysisStatus)}`}>
+              <div className="vertical-node-dot">
+                <span className="dot-inner-core">◈</span>
+              </div>
               <div className="vertical-node-content">
-                <div className="vertical-node-title">PARALLEL AGENT POOL ({agentPoolData.length} AGENTS)</div>
+                <div className="vertical-node-title">ORCHESTRA CORE ROUTING</div>
                 <div className="vertical-node-sub">
-                  {parallelStatus === 'completed' ? `✓ ${agentPoolData.length} agents completed responses` : parallelStatus === 'running' ? `● Running ${agentPoolData.length} parallel model agents...` : '○ Pending execution...'}
+                  {analysisStatus === 'completed' 
+                    ? '✓ Task classified & multi-agent route assigned' 
+                    : analysisStatus === 'running' 
+                    ? '● Analyzing query complexity & routing pool...' 
+                    : '○ Routing engine ready'}
                 </div>
               </div>
             </div>
 
-            <div className="vertical-timeline-line" />
+            {/* FLOWING CONNECTION PATH 2 */}
+            <div className="pipeline-flowing-path">
+              <div className="flowing-particle-beam violet-beam" />
+            </div>
 
-            {/* NODE 3: VERIFICATION & CRITIC */}
-            {councilMode !== 'single' && (
-              <>
-                <div className={`vertical-timeline-node ${getNodeClass(criticStatus)}`}>
-                  <div className="vertical-node-dot">3</div>
-                  <div className="vertical-node-content">
-                    <div className="vertical-node-title">VERIFICATION & ADVERSARIAL CRITIC</div>
-                    <div className="vertical-node-sub">
-                      {criticStatus === 'completed' ? '✓ Cross-check & logic verification passed' : criticStatus === 'running' ? '● Running adversarial critic checks...' : '○ Pending...'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="vertical-timeline-line" />
-              </>
-            )}
-
-            {/* NODE 4: SYNTHESIS & FINAL ANSWER */}
-            <div className={`vertical-timeline-node ${getNodeClass(synthesisStatus)}`}>
-              <div className="vertical-node-dot">{councilMode === 'single' ? '3' : '4'}</div>
+            {/* STAGE 3: MODEL AGENTS */}
+            <div className={`vertical-timeline-node stage-agents ${getNodeClass(parallelStatus)}`}>
+              <div className="vertical-node-dot">
+                <span className="dot-inner-core">{agentPoolData.length}</span>
+              </div>
               <div className="vertical-node-content">
-                <div className="vertical-node-title">EXECUTIVE CONSENSUS SYNTHESIS</div>
+                <div className="vertical-node-title">MODEL AGENTS POOL ({agentPoolData.length} PARALLEL)</div>
                 <div className="vertical-node-sub">
-                  {synthesisStatus === 'completed' ? '✓ Final solution synthesized' : synthesisStatus === 'running' ? '● Merging agent answers into consensus...' : '○ Ready'}
+                  {parallelStatus === 'completed' 
+                    ? `✓ ${agentPoolData.length} agents finished responses (${selectedModels[0] || 'gemini / qwen'})` 
+                    : parallelStatus === 'running' 
+                    ? `● Executing ${agentPoolData.length} model agents in parallel...` 
+                    : '○ Waiting for core dispatch...'}
+                </div>
+              </div>
+            </div>
+
+            {/* FLOWING CONNECTION PATH 3 */}
+            <div className="pipeline-flowing-path">
+              <div className="flowing-particle-beam amber-beam" />
+            </div>
+
+            {/* STAGE 4: SYNTHESIS */}
+            <div className={`vertical-timeline-node stage-synthesis ${getNodeClass(criticStatus === 'running' ? criticStatus : synthesisStatus)}`}>
+              <div className="vertical-node-dot">
+                <span className="dot-inner-core">⚡</span>
+              </div>
+              <div className="vertical-node-content">
+                <div className="vertical-node-title">CROSS-VERIFICATION & SYNTHESIS</div>
+                <div className="vertical-node-sub">
+                  {synthesisStatus === 'completed' 
+                    ? '✓ Adversarial cross-check passed & reasoning synthesized' 
+                    : (criticStatus === 'running' || synthesisStatus === 'running')
+                    ? '● Cross-examining model outputs & resolving divergence...' 
+                    : '○ Awaiting agent responses'}
+                </div>
+              </div>
+            </div>
+
+            {/* FLOWING CONNECTION PATH 4 */}
+            <div className="pipeline-flowing-path">
+              <div className="flowing-particle-beam white-beam" />
+            </div>
+
+            {/* STAGE 5: CONSENSUS */}
+            <div className={`vertical-timeline-node stage-consensus ${synthesisStatus === 'completed' ? 'glow-active-steady' : ''}`}>
+              <div className="vertical-node-dot">
+                <span className="dot-inner-core">★</span>
+              </div>
+              <div className="vertical-node-content">
+                <div className="vertical-node-title">UNIFIED EXECUTIVE CONSENSUS</div>
+                <div className="vertical-node-sub">
+                  {synthesisStatus === 'completed' 
+                    ? '✓ Final synthesized solution ready' 
+                    : '○ Ready to finalize'}
                 </div>
               </div>
             </div>

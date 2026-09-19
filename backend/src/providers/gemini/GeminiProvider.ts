@@ -28,12 +28,21 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
+  private modelsCache: { timestamp: number; models: string[] } | null = null;
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
+
   async getModels(): Promise<string[]> {
     return this.listModels();
   }
 
   async listModels(): Promise<string[]> {
     if (!this.apiKey) return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+
+    // Check memory cache
+    if (this.modelsCache && (Date.now() - this.modelsCache.timestamp < this.CACHE_TTL_MS)) {
+      return this.modelsCache.models;
+    }
+
     try {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 4000);
@@ -56,7 +65,9 @@ export class GeminiProvider implements AIProvider {
         })
         .map(m => m.name.split('/').pop() || m.name);
 
-      return filtered.length > 0 ? filtered : ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      const models = filtered.length > 0 ? filtered : ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      this.modelsCache = { timestamp: Date.now(), models };
+      return models;
     } catch {
       return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     }

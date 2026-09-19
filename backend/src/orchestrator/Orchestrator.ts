@@ -65,55 +65,35 @@ export class Orchestrator {
     return this.registry;
   }
 
-  // Task analysis & complexity heuristic
+  // Task analysis & complexity heuristic (Fast 0ms deterministic classification)
   public async analyzeTask(query: string, defaultModel?: string): Promise<{ taskType: string; explanation: string; suggestedAgents: number }> {
     const queryLower = query.toLowerCase();
     const wordCount = query.split(/\s+/).length;
 
-    const mathKeywords = ['solve for', 'integral', 'derivative', 'calculate', 'equation', 'algebra', 'calculus', 'arithmetic', 'matrix', 'fibonacci', 'factorial'];
-    const progKeywords = ['write a function', 'write code', 'javascript', 'python', 'compile', 'sandbox', 'class', 'function', 'variable', 'syntax error', 'programming', 'bug', 'html', 'css', 'typescript'];
-    const researchKeywords = ['latest', 'recent', 'who won', 'current weather', 'search for', 'news about', 'current state of'];
-    const simpleKeywords = ['hello', 'hi', 'hey', 'how are you', 'thank you', 'who are you', 'ok', 'yes', 'no'];
+    const mathKeywords = ['solve', 'integral', 'derivative', 'calculate', 'equation', 'algebra', 'calculus', 'arithmetic', 'matrix', 'fibonacci', 'factorial', 'probability', 'statistics', 'formula'];
+    const progKeywords = ['write a function', 'write code', 'javascript', 'python', 'compile', 'sandbox', 'class', 'function', 'variable', 'syntax error', 'programming', 'bug', 'html', 'css', 'typescript', 'react', 'algorithm', 'sql', 'api', 'json', 'regex'];
+    const researchKeywords = ['latest', 'recent', 'who won', 'current weather', 'search for', 'news about', 'current state of', 'market trends', 'who is', 'when was', 'history of'];
+    const simpleKeywords = ['hello', 'hi', 'hey', 'how are you', 'thank you', 'who are you', 'ok', 'yes', 'no', 'ping', 'test'];
+    const writingKeywords = ['write an essay', 'draft', 'compose', 'story', 'summarize', 'poem', 'blog post', 'article', 'rewrite', 'proofread'];
 
     if (simpleKeywords.some(kw => queryLower.startsWith(kw) || queryLower === kw) && wordCount < 6) {
-      return { taskType: 'Simple', explanation: 'Brief query or standard greeting.', suggestedAgents: 1 };
-    }
-    if (mathKeywords.some(kw => queryLower.includes(kw))) {
-      return { taskType: 'Mathematics', explanation: 'Mathematical calculation keywords detected.', suggestedAgents: 3 };
+      return { taskType: 'Simple', explanation: 'Direct conversational query or greeting.', suggestedAgents: 1 };
     }
     if (progKeywords.some(kw => queryLower.includes(kw))) {
-      return { taskType: 'Programming', explanation: 'Coding terms detected.', suggestedAgents: 4 };
+      return { taskType: 'Programming', explanation: 'Code generation & technical terms detected.', suggestedAgents: 4 };
+    }
+    if (mathKeywords.some(kw => queryLower.includes(kw))) {
+      return { taskType: 'Mathematics', explanation: 'Mathematical & algorithmic reasoning detected.', suggestedAgents: 3 };
     }
     if (researchKeywords.some(kw => queryLower.includes(kw))) {
-      return { taskType: 'Research', explanation: 'Research or factual queries detected.', suggestedAgents: 5 };
+      return { taskType: 'Research', explanation: 'Factual or contextual research detected.', suggestedAgents: 5 };
+    }
+    if (writingKeywords.some(kw => queryLower.includes(kw))) {
+      return { taskType: 'Writing', explanation: 'Creative composition & synthesis requested.', suggestedAgents: 3 };
     }
 
-    if (defaultModel) {
-      try {
-        const systemPrompt = `Analyze the query and classify into: Mathematics, Programming, Research, Writing, Logic, Simple.
-Return JSON: {"type": "classification", "explanation": "reasoning", "complexity": "easy|moderate|complex|deep"}`;
-
-        const response = await this.registry.generateWithFallback({
-          model: defaultModel,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: query }],
-          temperature: 0.1
-        });
-
-        const data = JSON.parse(response.content.trim());
-        let count = 3;
-        if (data.complexity === 'easy') count = 1;
-        if (data.complexity === 'moderate') count = 3;
-        if (data.complexity === 'complex') count = 5;
-        if (data.complexity === 'deep') count = 8;
-
-        return { taskType: data.type || 'Logic', explanation: data.explanation || 'LLM classified', suggestedAgents: count };
-      } catch (err) {
-        // Fallback to default heuristic if LLM call fails
-      }
-    }
-
-    return { taskType: 'Logic', explanation: 'General reasoning query.', suggestedAgents: 3 };
+    // Default fast classification without blocking LLM round trip
+    return { taskType: 'Logic', explanation: 'Multi-perspective reasoning & analytical evaluation.', suggestedAgents: 3 };
   }
 
   private extractCodeBlock(text: string): string | null {
@@ -302,59 +282,66 @@ Return JSON: {"type": "classification", "explanation": "reasoning", "complexity"
       data: agentPool.map(a => ({ agentId: a.agentId, model: a.model, role: a.role, status: a.status }))
     });
 
-    // 4. CONTROLLED CONCURRENCY QUEUE EXECUTION (Batch of 2 to respect serverless limits)
-    const BATCH_SIZE = 2;
-    for (let i = 0; i < agentPool.length; i += BATCH_SIZE) {
-      const chunk = agentPool.slice(i, i + BATCH_SIZE);
-      
-      chunk.forEach(a => a.status = 'processing');
-      pushStepLog({
-        step: 'parallel_execution',
-        status: 'running',
-        message: `Executing agents (${i + 1}-${Math.min(i + BATCH_SIZE, agentPool.length)} of ${effectiveCount})...`,
-        data: agentPool.map(a => ({
-          agentId: a.agentId,
-          model: a.model,
-          role: a.role,
-          status: a.status
-        }))
-      });
+    // 4. PARALLEL CONCURRENT AGENT EXECUTION
+    const councilStartTime = Date.now();
+    agentPool.forEach(a => a.status = 'processing');
+    pushStepLog({
+      step: 'parallel_execution',
+      status: 'running',
+      message: `Executing ${agentPool.length} council agent(s) concurrently in parallel...`,
+      data: agentPool.map(a => ({
+        agentId: a.agentId,
+        model: a.model,
+        role: a.role,
+        status: a.status
+      }))
+    });
 
-      await Promise.all(chunk.map(async (agent, chunkIdx) => {
-        const globalIdx = i + chunkIdx;
-        const spec = roleSpecs[globalIdx];
-        const startTime = Date.now();
+    await Promise.all(agentPool.map(async (agent, idx) => {
+      const spec = roleSpecs[idx];
+      const startTime = Date.now();
 
-        try {
-          const req: AIRequest = {
-            model: agent.model,
-            system: spec.systemPrompt,
-            messages: [{ role: 'user', content: query + promptContext }],
-            temperature: 0.6
-          };
+      try {
+        const req: AIRequest = {
+          model: agent.model,
+          system: spec.systemPrompt,
+          messages: [{ role: 'user', content: query + promptContext }],
+          temperature: 0.6
+        };
 
-          // Use ProviderRegistry with fallback to other available models
-          const fallbacks = availableModels.filter(m => m !== agent.model);
-          const res = await this.registry.generateWithFallback(req, fallbacks);
-          
+        let content = '';
+        const fallbacks = availableModels.filter(m => m !== agent.model);
+
+        // If single agent and streaming callback exists, stream tokens directly
+        if ((mode === 'single' || effectiveCount === 1) && onSynthesizeChunk) {
+          const res = await this.registry.streamWithFallback(req, onSynthesizeChunk, fallbacks);
+          content = res.content;
           if (!modelsUsed.includes(res.modelUsed)) modelsUsed.push(res.modelUsed);
-          agent.status = 'completed';
-          agent.executionTimeSec = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-          agent.response = stripThinking(res.content);
-        } catch (err: any) {
-          agent.status = 'failed';
-          agent.error = err.message || 'Provider execution failed';
-          agent.response = '';
+        } else {
+          const res = await this.registry.generateWithFallback(req, fallbacks);
+          content = res.content;
+          if (!modelsUsed.includes(res.modelUsed)) modelsUsed.push(res.modelUsed);
         }
-      }));
-    }
+
+        agent.status = 'completed';
+        agent.executionTimeSec = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+        agent.response = stripThinking(content);
+      } catch (err: any) {
+        agent.status = 'failed';
+        agent.error = err.message || 'Provider execution failed';
+        agent.response = '';
+      }
+    }));
+
+    const agentElapsedMs = Date.now() - councilStartTime;
+    console.log(`[Orchestra] Parallel agent execution completed in ${agentElapsedMs}ms (${agentPool.length} agents)`);
 
     const successfulAgents = agentPool.filter(a => a.status === 'completed');
 
     pushStepLog({
       step: 'parallel_execution',
       status: successfulAgents.length > 0 ? 'completed' : 'failed',
-      message: `Council Agent Execution complete (${successfulAgents.length}/${effectiveCount} successful).`,
+      message: `Council Agent Execution complete (${successfulAgents.length}/${effectiveCount} successful in ${(agentElapsedMs / 1000).toFixed(2)}s).`,
       data: agentPool.map(a => ({
         agentId: a.agentId,
         model: a.model,
@@ -378,10 +365,6 @@ Return JSON: {"type": "classification", "explanation": "reasoning", "complexity"
         status: 'completed',
         message: 'Single agent response rendered directly.'
       });
-
-      if (onSynthesizeChunk && singleAgent.response) {
-        onSynthesizeChunk(singleAgent.response);
-      }
 
       return {
         finalAnswer: singleAgent.response || '',

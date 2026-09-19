@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Plus, Trash2, Cpu, Activity, FileText, 
-  Settings, BarChart2, Layers, Sliders, Heart, MessageSquare
+  Settings, BarChart2, Layers, Sliders, Heart, MessageSquare, X
 } from 'lucide-react';
 import { Conversation, WorkspaceTab } from '../types';
 import { AILogo } from './AILogo';
@@ -20,6 +20,7 @@ interface SidebarProps {
   onSelectTab: (tab: WorkspaceTab) => void;
   onOpenCustomization: () => void;
   onGoToLanding?: () => void;
+  onClose?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -35,27 +36,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDeleteConvo,
   onSelectTab,
   onOpenCustomization,
-  onGoToLanding
+  onGoToLanding,
+  onClose
 }) => {
   const isOnlineDeployed = typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
 
+  // Prevent conflicting classes: if isOpen (mobile open), do not attach 'closed'
+  const sidebarClasses = `sidebar ${isOpen ? 'open' : ''} ${isClosed && !isOpen ? 'closed' : ''}`.trim();
+
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''} ${isClosed ? 'closed' : ''}`}>
-      {/* BRAND HEADER */}
-      <div 
-        className="sidebar-header" 
-        onClick={() => onGoToLanding && onGoToLanding()}
-        style={{ cursor: onGoToLanding ? 'pointer' : 'default' }}
-        title="Return to Landing Page"
-      >
-        <AILogo size={20} showText={true} />
-        <span className="brand-cloud-badge">
-          CLOUD
-        </span>
+    <aside className={sidebarClasses} onClick={(e) => e.stopPropagation()}>
+      {/* BRAND HEADER WITH OPTIONAL MOBILE CLOSE */}
+      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div 
+          onClick={() => {
+            if (onGoToLanding) onGoToLanding();
+            if (onClose) onClose();
+          }}
+          style={{ cursor: onGoToLanding ? 'pointer' : 'default', display: 'flex', alignItems: 'center' }}
+          title="Return to Landing Page"
+        >
+          <AILogo size={24} showText={true} subtitle="COMMAND CENTER" />
+        </div>
+        {onClose && (
+          <button 
+            className="sidebar-mobile-close-btn" 
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            title="Close menu"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* NEW CONVERSATION BUTTON WITH CTRL K TAG */}
-      <button className="new-chat-pill-btn" onClick={onStartNewChat}>
+      <button 
+        className="new-chat-pill-btn" 
+        onClick={() => {
+          onStartNewChat();
+          if (onClose) onClose();
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Plus size={14} />
           <span>New conversation</span>
@@ -82,6 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => {
                 onSelectTab('orchestra');
                 onSelectConvo(convo.id);
+                if (onClose) onClose();
               }}
             >
               <div className="session-icon-box">
@@ -107,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         <button
           className={`nav-item ${activeTab === 'orchestra' && !activeConvoId ? 'active' : ''}`}
-          onClick={() => onSelectTab('orchestra')}
+          onClick={() => { onSelectTab('orchestra'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <Layers size={14} />
@@ -117,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           className={`nav-item ${activeTab === 'models' ? 'active' : ''}`}
-          onClick={() => onSelectTab('models')}
+          onClick={() => { onSelectTab('models'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <Cpu size={14} />
@@ -127,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           className={`nav-item ${activeTab === 'runs' ? 'active' : ''}`}
-          onClick={() => onSelectTab('runs')}
+          onClick={() => { onSelectTab('runs'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <Activity size={14} />
@@ -137,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           className={`nav-item ${activeTab === 'files' ? 'active' : ''}`}
-          onClick={() => onSelectTab('files')}
+          onClick={() => { onSelectTab('files'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <FileText size={14} />
@@ -150,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="nav-section" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
         <div className="nav-section-title">SYSTEM</div>
 
-        <button className="nav-item" onClick={onOpenCustomization}>
+        <button className="nav-item" onClick={() => { onOpenCustomization(); if (onClose) onClose(); }}>
           <div className="nav-item-left">
             <Sliders size={14} style={{ color: 'var(--accent-color)' }} />
             <span>Customize Layout</span>
@@ -159,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => onSelectTab('settings')}
+          onClick={() => { onSelectTab('settings'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <Settings size={14} />
@@ -169,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           className={`nav-item ${activeTab === 'usage' ? 'active' : ''}`}
-          onClick={() => onSelectTab('usage')}
+          onClick={() => { onSelectTab('usage'); if (onClose) onClose(); }}
         >
           <div className="nav-item-left">
             <BarChart2 size={14} />

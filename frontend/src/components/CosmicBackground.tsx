@@ -32,7 +32,7 @@ const sampleTextTargets = (text: string, count: number, canvasWidth: number, can
   if (!ctx) return Array.from({ length: count }, () => ({ x: 0, y: 0 }));
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = '600 54px "Geist", "Inter", sans-serif';
+  ctx.font = '600 54px "Outfit", "Inter", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, w / 2, h / 2);
@@ -239,44 +239,14 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ effects }) =
       // Curve Scale Radius
       const lemniscateScale = Math.min(width * 0.42, 640);
 
-      // --- RENDER CENTRAL STARBURST FLARE & AMBIENT GLOW ---
+      // Ambient Glow Gradient
       const starGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.min(width, height) * 0.55);
-      starGlow.addColorStop(0, 'rgba(255, 245, 230, 0.12)');
-      starGlow.addColorStop(0.2, 'rgba(245, 158, 11, 0.04)');
-      starGlow.addColorStop(0.45, 'rgba(6, 182, 212, 0.025)');
+      starGlow.addColorStop(0, 'rgba(255, 245, 230, 0.08)');
+      starGlow.addColorStop(0.2, 'rgba(245, 158, 11, 0.02)');
+      starGlow.addColorStop(0.45, 'rgba(6, 182, 212, 0.015)');
       starGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = starGlow;
       ctx.fillRect(0, 0, width, height);
-
-      // Central Starburst Flare Crosshair (Center Intersection)
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(time * 0.05);
-
-      // Horizontal / Vertical Flare Rays
-      const flareGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 90);
-      flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
-      flareGrad.addColorStop(0.2, 'rgba(251, 191, 36, 0.4)');
-      flareGrad.addColorStop(0.6, 'rgba(6, 182, 212, 0.15)');
-      flareGrad.addColorStop(1, 'transparent');
-
-      ctx.fillStyle = flareGrad;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 110, 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 2.5, 110, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Core Diamond Flare
-      ctx.beginPath();
-      ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-      ctx.shadowBlur = 15;
-      ctx.fill();
-      ctx.restore();
 
       // Mouse Parallax Offset Calculation
       const parallaxX = isMobile ? 0 : (mouseX - width / 2) * 0.012;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Cpu, Layers, Zap, FileText, ArrowRight } from 'lucide-react';
 import { GravitationalBlackHoleEngine } from './GravitationalBlackHoleEngine';
+import { SectionParticleField } from './SectionParticleField';
 
 const capabilities = [
   {
@@ -83,6 +84,9 @@ export const FeaturesSection: React.FC = () => {
 
   return (
     <section className="features-section gravitational-experience" id="features" ref={sectionRef}>
+      {/* Mouse-reactive ambient particle field */}
+      <SectionParticleField particleCount={140} colorPalette="mixed" />
+      
       <div className="gravitational-inner">
         {/* Section Header */}
         <div className="features-header">

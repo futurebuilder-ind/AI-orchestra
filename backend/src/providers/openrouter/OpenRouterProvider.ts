@@ -37,12 +37,20 @@ export class OpenRouterProvider implements AIProvider {
     }
   }
 
+  private modelsCache: { timestamp: number; models: string[] } | null = null;
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
+
   async getModels(): Promise<string[]> {
     return this.listModels();
   }
 
   async listModels(): Promise<string[]> {
     if (!this.apiKey) return DEFAULT_OPENROUTER_FREE_MODELS;
+
+    if (this.modelsCache && (Date.now() - this.modelsCache.timestamp < this.CACHE_TTL_MS)) {
+      return this.modelsCache.models;
+    }
+
     try {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 4000);
@@ -60,7 +68,9 @@ export class OpenRouterProvider implements AIProvider {
         .map(m => m.id)
         .filter(id => id.endsWith(':free'));
 
-      return freeModels.length > 0 ? freeModels : DEFAULT_OPENROUTER_FREE_MODELS;
+      const models = freeModels.length > 0 ? freeModels : DEFAULT_OPENROUTER_FREE_MODELS;
+      this.modelsCache = { timestamp: Date.now(), models };
+      return models;
     } catch {
       return DEFAULT_OPENROUTER_FREE_MODELS;
     }
