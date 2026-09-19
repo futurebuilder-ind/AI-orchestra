@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Layers, Zap, ArrowUpRight, Compass } from 'lucide-react';
+import { Cpu, Layers, Zap } from 'lucide-react';
 import { CinematicOrchestraNetwork } from './CinematicOrchestraNetwork';
 
 interface FuturisticHeroProps {
@@ -35,28 +35,10 @@ export const FuturisticHero: React.FC<FuturisticHeroProps> = ({
           ORCHESTRATE &nbsp; INTELLIGENCE &nbsp; BEYOND &nbsp; LIMITS
         </div>
 
-        {/* Action CTAs Row */}
-        <div className="hero-cta-research-row">
-          <button
-            className="cta-btn-research-primary"
-            onClick={() => onLaunchConsole ? onLaunchConsole() : null}
-          >
-            <span>Enter AI Orchestra</span>
-            <ArrowUpRight size={15} />
-          </button>
-          <a href="#features" className="cta-btn-research-secondary">
-            <span>Explore Architecture</span>
-            <Compass size={14} style={{ marginLeft: '4px' }} />
-          </a>
-        </div>
       </div>
 
       {/* --- PRESERVED CINEMATIC ORCHESTRA NETWORK (FLOATING) --- */}
       <div className="hero-network-floating-wrapper">
-        <div className="network-header-badge">
-          <span className="badge-dot" />
-          <span>LIVE ARCHITECTURE ENGINE</span>
-        </div>
         <CinematicOrchestraNetwork modelNames={availableModels} />
       </div>
 
